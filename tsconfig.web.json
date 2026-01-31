@@ -12,6 +12,12 @@
         "paths": {
             "@renderer/*": [
                 "src/renderer/src/*"
+            ],
+            "@design-system": [
+                "src/renderer/src/design-system/index.ts"
+            ],
+            "@design-system/*": [
+                "src/renderer/src/design-system/*"
             ]
         }
     }

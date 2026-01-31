@@ -62,7 +62,7 @@ app.whenReady().then(() => {
                 const stats = await stat(fullPath)
 
                 if (stats.isDirectory()) {
-                    let logo = undefined
+                    let logo: string | undefined = undefined
                     try {
                         const configPath = join(fullPath, 'project.json')
                         const configContent = await readFile(configPath, 'utf-8')

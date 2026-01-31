@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { JiraConfig, JiraProject, JiraVersion, JiraIssue } from '../../../shared/jira-types'
+import { Modal, Input, Select, Button, Typography, Card } from '@design-system'
+
 
 interface JiraImportModalProps {
     currentProject: string
@@ -103,19 +105,7 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
             })
 
             // Filename
-            const validFilename = versionName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.txt' // Saving as .txt for now, backend parser will handle it? 
-            // WAIT: The App parses PDFs usually. But can we support TXT or Custom JSON?
-            // The Scanner `scanReleases` parses `.txt` or just files? 
-            // I should look at `scanner.ts` if I can.
-            // Assuming for now I can just save a text file and the `scanner` reads it.
-            // If the scanner only supports PDF, I'm in trouble.
-            // Let's assume I save it as `.txt` and I will modify `scanner.ts` later if needed, OR I will save a special `.json` if the scanner supports it.
-            // The user didn't specify file format, just "download releases".
-            // I'll stick to a simple text format and ensure scanner reads it. 
-            // ACTUALLY: The `ReleaseDetail.tsx` expects `ReleaseData` with specific fields.
-            // If I just save a text file, `scanReleases` needs to parse it into `ReleaseData`.
-            // Let's assume I'll save a JSON file: `release-name.json` and update `scanner` to read JSONs too later.
-            // But let's verify `scanner.ts` later. For now, I'll save a `.json` file because it preserves metatada perfectly!
+            const validFilename = versionName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.txt'
 
             const releaseData = {
                 filename: validFilename,
@@ -144,151 +134,159 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
         }
     }
 
-    if (!currentProject && step > 1) {
-        // Should not happen if button disabled
-    }
-
     return (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm" onClick={onClose}>
-            <div className="glass-panel w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-white/10" onClick={e => e.stopPropagation()}>
-
-                <div className="p-6 border-b border-white/10 bg-brand-deep/50 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
-                        📥 Import from Jira
-                    </h2>
-                    <button onClick={onClose} className="text-brand-text-sec hover:text-white transition-colors">✕</button>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            maxWidth="2xl"
+            title={
+                <div className="flex items-center gap-2">
+                    <span className="text-2xl">📥</span>
+                    <Typography variant="h2" neon>Import from Jira</Typography>
                 </div>
+            }
+        >
+            <div className="space-y-6">
+                {error && (
+                    <Card variant="solid" className="bg-red-900/50 border-red-500/50 !p-3">
+                        <Typography variant="caption" className="text-red-200">{error}</Typography>
+                    </Card>
+                )}
 
-                <div className="p-6 space-y-6">
-                    {error && (
-                        <div className="bg-red-900/50 border border-red-500/50 text-red-200 p-3 rounded text-sm">
-                            {error}
+                {step === 1 && (
+                    <div className="space-y-4">
+                        <div>
+                            <Typography variant="caption" className="block mb-1 font-bold uppercase">Jira Host URL</Typography>
+                            <Input
+                                fullWidth
+                                type="text"
+                                placeholder="https://your-domain.atlassian.net"
+                                value={config.host}
+                                onChange={e => setConfig(prev => ({ ...prev, host: e.target.value }))}
+                            />
                         </div>
-                    )}
+                        <div>
+                            <Typography variant="caption" className="block mb-1 font-bold uppercase">Email</Typography>
+                            <Input
+                                fullWidth
+                                type="text"
+                                placeholder="email@example.com"
+                                value={config.email}
+                                onChange={e => setConfig(prev => ({ ...prev, email: e.target.value }))}
+                            />
+                        </div>
+                        <div>
+                            <Typography variant="caption" className="block mb-1 font-bold uppercase">API Token</Typography>
+                            <Input
+                                fullWidth
+                                type="password"
+                                placeholder="••••••••••••••••"
+                                value={config.apiToken}
+                                onChange={e => setConfig(prev => ({ ...prev, apiToken: e.target.value }))}
+                            />
+                            <Typography variant="mono" className="mt-1 text-gray-500">
+                                Create one at <a href="#" className="underline hover:text-brand-cyan" onClick={() => window.open('https://id.atlassian.com/manage-profile/security/api-tokens')}>Atlassian Security</a>
+                            </Typography>
+                        </div>
+                        <Button
+                            fullWidth
+                            isLoading={loading}
+                            onClick={handleTestConnection}
+                            disabled={loading}
+                        >
+                            Connect & Continue
+                        </Button>
+                    </div>
+                )}
 
-                    {step === 1 && (
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Jira Host URL</label>
-                                <input
-                                    type="text"
-                                    placeholder="https://your-domain.atlassian.net"
-                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none transition-all placeholder:text-gray-600"
-                                    value={config.host}
-                                    onChange={e => setConfig(prev => ({ ...prev, host: e.target.value }))}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Email</label>
-                                <input
-                                    type="text"
-                                    placeholder="email@example.com"
-                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none transition-all placeholder:text-gray-600"
-                                    value={config.email}
-                                    onChange={e => setConfig(prev => ({ ...prev, email: e.target.value }))}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">API Token</label>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••••••••••"
-                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none transition-all placeholder:text-gray-600"
-                                    value={config.apiToken}
-                                    onChange={e => setConfig(prev => ({ ...prev, apiToken: e.target.value }))}
-                                />
-                                <p className="text-xs text-brand-text-sec mt-1">Create one at <a href="#" className="underline hover:text-brand-cyan" onClick={() => window.open('https://id.atlassian.com/manage-profile/security/api-tokens')}>Atlassian Security</a></p>
-                            </div>
-                            <button
-                                disabled={loading}
-                                onClick={handleTestConnection}
-                                className="w-full py-2 neon-button disabled:opacity-50 text-white rounded font-bold transition-all"
+                {step === 2 && (
+                    <div className="space-y-4">
+                        <div>
+                            <Typography variant="caption" className="block mb-1 font-bold uppercase">Select Jira Project</Typography>
+                            <Select
+                                fullWidth
+                                value={selectedProjectKey}
+                                onChange={e => handleFetchVersions(e.target.value)}
                             >
-                                {loading ? 'Connecting...' : 'Connect & Continue'}
-                            </button>
-                        </div>
-                    )}
-
-                    {step === 2 && (
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Select Jira Project</label>
-                                <select
-                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none"
-                                    value={selectedProjectKey}
-                                    onChange={e => handleFetchVersions(e.target.value)}
-                                >
-                                    <option value="">-- Select Project --</option>
-                                    {jiraProjects.map(p => (
-                                        <option key={p.id} value={p.key}>{p.name} ({p.key})</option>
-                                    ))}
-                                </select>
-                            </div>
-                            {selectedProjectKey && (
-                                <div>
-                                    <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Select Release (Version)</label>
-                                    <select
-                                        className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none"
-                                        value={selectedVersionId}
-                                        onChange={e => setSelectedVersionId(e.target.value)}
-                                        disabled={loading}
-                                    >
-                                        <option value="">-- Select Version --</option>
-                                        {versions.map(v => (
-                                            <option key={v.id} value={v.id}>{v.name} {v.released ? '(Released)' : '(Unreleased)'} - {v.releaseDate}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                            <button
-                                disabled={!selectedVersionId || loading}
-                                onClick={handlePreview}
-                                className="w-full py-2 neon-button disabled:opacity-50 text-white rounded font-bold transition-all"
-                            >
-                                {loading ? 'Loading Issues...' : 'Preview Import'}
-                            </button>
-                        </div>
-                    )}
-
-                    {step === 3 && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-brand-deep/50 glass-panel p-4 rounded text-center border border-white/5">
-                                    <div className="text-2xl font-bold text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">{issues.filter(i => i.fields.issuetype.name === 'Bug').length}</div>
-                                    <div className="text-xs text-brand-text-sec uppercase">Bugs Found</div>
-                                </div>
-                                <div className="bg-brand-deep/50 glass-panel p-4 rounded text-center border border-white/5">
-                                    <div className="text-2xl font-bold text-brand-cyan drop-shadow-[0_0_8px_rgba(0,242,255,0.6)]">{issues.filter(i => i.fields.issuetype.name !== 'Bug').length}</div>
-                                    <div className="text-xs text-brand-text-sec uppercase">Stories/Tasks</div>
-                                </div>
-                            </div>
-
-                            <div className="max-h-48 overflow-y-auto bg-brand-deep/80 p-2 rounded border border-white/10 text-xs text-brand-text-sec font-mono">
-                                {issues.slice(0, 10).map(i => (
-                                    <div key={i.key} className="truncate">
-                                        [{i.key}] {i.fields.summary}
-                                    </div>
+                                <option value="">-- Select Project --</option>
+                                {jiraProjects.map(p => (
+                                    <option key={p.id} value={p.key}>{p.name} ({p.key})</option>
                                 ))}
-                                {issues.length > 10 && <div>... and {issues.length - 10} more.</div>}
+                            </Select>
+                        </div>
+                        {selectedProjectKey && (
+                            <div className="animate-in fade-in slide-in-from-top-2">
+                                <Typography variant="caption" className="block mb-1 font-bold uppercase">Select Release (Version)</Typography>
+                                <Select
+                                    fullWidth
+                                    value={selectedVersionId}
+                                    onChange={e => setSelectedVersionId(e.target.value)}
+                                    disabled={loading}
+                                >
+                                    <option value="">-- Select Version --</option>
+                                    {versions.map(v => (
+                                        <option key={v.id} value={v.id}>{v.name} {v.released ? '(Released)' : '(Unreleased)'} - {v.releaseDate}</option>
+                                    ))}
+                                </Select>
                             </div>
+                        )}
+                        <Button
+                            fullWidth
+                            disabled={!selectedVersionId || loading}
+                            isLoading={loading}
+                            onClick={handlePreview}
+                        >
+                            Preview Import
+                        </Button>
+                    </div>
+                )}
 
-                            <button
-                                disabled={loading}
-                                onClick={handleImport}
-                                className="w-full py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white rounded font-bold transition-colors shadow-[0_0_10px_rgba(22,163,74,0.4)]"
-                            >
-                                {loading ? 'Importing...' : 'Confirm Import'}
-                            </button>
-                            <button
+                {step === 3 && (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <Card variant="glass" className="bg-brand-deep/50 text-center !p-4">
+                                <div className="text-2xl font-bold text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">{issues.filter(i => i.fields.issuetype.name === 'Bug').length}</div>
+                                <Typography variant="caption" className="uppercase">Bugs Found</Typography>
+                            </Card>
+                            <Card variant="glass" className="bg-brand-deep/50 text-center !p-4">
+                                <div className="text-2xl font-bold text-brand-cyan drop-shadow-[0_0_8px_rgba(0,242,255,0.6)]">{issues.filter(i => i.fields.issuetype.name !== 'Bug').length}</div>
+                                <Typography variant="caption" className="uppercase">Stories/Tasks</Typography>
+                            </Card>
+                        </div>
+
+                        <div className="max-h-48 overflow-y-auto bg-brand-deep/80 p-2 rounded border border-white/10">
+                            {issues.slice(0, 10).map(i => (
+                                <div key={i.key} className="truncate text-xs text-brand-text-sec font-mono mb-1">
+                                    <span className="font-bold text-white">[{i.key}]</span> {i.fields.summary}
+                                </div>
+                            ))}
+                            {issues.length > 10 && <div className="text-xs text-brand-text-sec text-center mt-2 italic">... and {issues.length - 10} more.</div>}
+                        </div>
+
+                        <div className="flex gap-3">
+                            <Button
+                                variant="ghost"
                                 onClick={() => setStep(2)}
-                                className="w-full py-2 text-brand-text-sec hover:text-white transition-colors"
+                                className="flex-1"
                             >
                                 Back
-                            </button>
+                            </Button>
+                            <Button
+                                variant="primary" // Should be green?
+                                // Let's use custom class since we don't have success variant in Button yet, or use primary.
+                                // Primary is cyan. Green is okay.
+                                // Actually Button atom has 'variant' prop.
+                                // I'll stick to primary for "Confirm".
+                                isLoading={loading}
+                                onClick={handleImport}
+                                className="flex-[2]"
+                            >
+                                Confirm Import
+                            </Button>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
-        </div>
+        </Modal>
     )
 }
