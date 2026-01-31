@@ -1,6 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join, basename } from 'path'
-import { copyFile, mkdir, readdir, stat, unlink } from 'fs/promises'
+import { copyFile, mkdir, readdir, stat, unlink, readFile } from 'fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { scanReleases } from './scanner'
 import { parseSLA } from './sla-parser'
@@ -55,12 +55,36 @@ app.whenReady().then(() => {
         try {
             await mkdir(releasesPath, { recursive: true })
             const items = await readdir(releasesPath)
-            const projects: string[] = []
+            const projects: any[] = []
+
             for (const item of items) {
                 const fullPath = join(releasesPath, item)
                 const stats = await stat(fullPath)
+
                 if (stats.isDirectory()) {
-                    projects.push(item)
+                    let logo = undefined
+                    try {
+                        const configPath = join(fullPath, 'project.json')
+                        const configContent = await readFile(configPath, 'utf-8')
+                        const config = JSON.parse(configContent)
+                        if (config.logo) {
+                            // Convert logo to base64 or absolute path for renderer
+                            // Using protocol or reading file to base64
+                            const logoPath = join(fullPath, config.logo)
+                            const logoBuffer = await readFile(logoPath)
+                            const base64 = logoBuffer.toString('base64')
+                            const ext = config.logo.split('.').pop()
+                            logo = `data:image/${ext};base64,${base64}`
+                        }
+                    } catch (e) {
+                        // parsed without logo or config doesn't exist
+                    }
+
+                    projects.push({
+                        name: item,
+                        logo,
+                        lastModified: stats.mtime.toISOString()
+                    })
                 }
             }
             return projects
@@ -93,6 +117,54 @@ app.whenReady().then(() => {
             return []
         }
     })
+
+    ipcMain.handle('upload-logo', async (_, projectName: string) => {
+        const { canceled, filePaths } = await dialog.showOpenDialog({
+            properties: ['openFile'],
+            filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'svg'] }]
+        })
+
+        if (canceled || filePaths.length === 0) {
+            return null
+        }
+
+        const filePath = filePaths[0]
+        const releasesPath = getDocumentsPath()
+        const projectPath = join(releasesPath, projectName)
+
+        try {
+            await mkdir(projectPath, { recursive: true })
+
+            const ext = filePath.split('.').pop()
+            const newFileName = `logo.${ext}`
+            const destPath = join(projectPath, newFileName)
+
+            await copyFile(filePath, destPath)
+
+            // Update project.json
+            const configPath = join(projectPath, 'project.json')
+            let config: any = {}
+            try {
+                const existing = await readFile(configPath, 'utf-8')
+                config = JSON.parse(existing)
+            } catch (e) {
+                // Ignore if not exists
+            }
+
+            config.logo = newFileName
+            await import('fs/promises').then(fs => fs.writeFile(configPath, JSON.stringify(config, null, 2)))
+
+            // Return the new logo as base64
+            const logoBuffer = await readFile(destPath)
+            const base64 = logoBuffer.toString('base64')
+            return `data:image/${ext};base64,${base64}`
+
+        } catch (e) {
+            console.error(`Failed to upload logo for ${projectName}`, e)
+            return null
+        }
+    })
+
 
     ipcMain.handle('upload-file', async (_, projectName: string) => {
         const { canceled, filePaths } = await dialog.showOpenDialog({

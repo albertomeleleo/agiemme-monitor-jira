@@ -84,11 +84,11 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         setReport(null)
     }
 
-    const COLORS = ['#10B981', '#EF4444', '#F59E0B']
+    const COLORS = ['#10B981', '#EF4444', '#00f2ff']
 
     if (!report && !loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-full p-12 text-center bg-gray-900 rounded-3xl border-2 border-dashed border-gray-700 hover:border-gray-500 transition-colors cursor-pointer"
+            <div className="flex flex-col items-center justify-center h-full p-12 text-center glass-panel rounded-3xl border-2 border-dashed border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group"
                 onClick={() => fileInputRef.current?.click()}
             >
                 <input
@@ -203,24 +203,24 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         <div className="space-y-8 animate-in fade-in duration-500 relative">
             {/* Header Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                    <h3 className="text-gray-400 text-sm font-bold uppercase">Active Issues</h3>
+                <div className="glass-panel p-6 rounded-xl border border-white/10">
+                    <h3 className="text-brand-text-sec text-sm font-bold uppercase">Active Issues</h3>
                     <div className="text-4xl font-bold text-white mt-2">{validIssues.length}</div>
                     {rejectedIssues.length > 0 && <div className="text-xs text-orange-400 mt-1"> +{rejectedIssues.length} Rejected</div>}
                 </div>
-                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                    <h3 className="text-gray-400 text-sm font-bold uppercase">Compliance</h3>
-                    <div className={`text-4xl font-bold mt-2 ${calculateCompliance(validIssues) >= 90 ? 'text-green-400' : calculateCompliance(validIssues) >= 75 ? 'text-yellow-400' : 'text-red-400'}`}>
+                <div className="glass-panel p-6 rounded-xl border border-white/10">
+                    <h3 className="text-brand-text-sec text-sm font-bold uppercase">Compliance</h3>
+                    <div className={`text-4xl font-bold mt-2 ${calculateCompliance(validIssues) >= 90 ? 'text-green-400' : calculateCompliance(validIssues) >= 75 ? 'text-yellow-400' : 'text-red-400'} drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]`}>
                         {calculateCompliance(validIssues).toFixed(1)}%
                     </div>
                 </div>
-                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                    <h3 className="text-gray-400 text-sm font-bold uppercase">Met SLA</h3>
-                    <div className="text-4xl font-bold text-green-400 mt-2">{validIssues.filter(i => i.resolutionSLAMet && i.reactionSLAMet).length}</div>
+                <div className="glass-panel p-6 rounded-xl border border-white/10">
+                    <h3 className="text-brand-text-sec text-sm font-bold uppercase">Met SLA</h3>
+                    <div className="text-4xl font-bold text-green-400 mt-2 hover:drop-shadow-[0_0_8px_rgba(74,222,128,0.5)] transition-all">{validIssues.filter(i => i.resolutionSLAMet && i.reactionSLAMet).length}</div>
                 </div>
-                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                    <h3 className="text-gray-400 text-sm font-bold uppercase">Missed SLA</h3>
-                    <div className="text-4xl font-bold text-red-400 mt-2">{validIssues.filter(i => !i.resolutionSLAMet || !i.reactionSLAMet).length}</div>
+                <div className="glass-panel p-6 rounded-xl border border-white/10">
+                    <h3 className="text-brand-text-sec text-sm font-bold uppercase">Missed SLA</h3>
+                    <div className="text-4xl font-bold text-red-400 mt-2 hover:drop-shadow-[0_0_8px_rgba(248,113,113,0.5)] transition-all">{validIssues.filter(i => !i.resolutionSLAMet || !i.reactionSLAMet).length}</div>
                 </div>
             </div>
 
@@ -231,15 +231,15 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
             {/* Filters */}
             <div className={`flex flex-wrap gap-4 items-center p-4 transition-all duration-300 sticky top-0 z-20 ${isSticky
-                ? 'bg-blue-900/95 backdrop-blur-md border-b-2 border-blue-400 shadow-2xl shadow-blue-500/20 rounded-b-xl mx-0'
-                : 'bg-gray-800 rounded-xl border border-gray-700 mx-0'
+                ? 'bg-brand-deep/95 backdrop-blur-md border-b-2 border-brand-cyan shadow-2xl shadow-brand-cyan/20 rounded-b-xl mx-0'
+                : 'glass-panel mx-0'
                 }`}>
                 <span className="text-gray-400 font-bold text-sm uppercase">Filter By:</span>
 
                 <select
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="glass-panel text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-cyan hover:bg-brand-card"
                 >
                     <option value="All">All Months</option>
                     {availableMonths.map(m => (
@@ -250,7 +250,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 <select
                     value={selectedPriority}
                     onChange={(e) => setSelectedPriority(e.target.value)}
-                    className="bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="glass-panel text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-cyan hover:bg-brand-card"
                 >
                     <option value="All">All Priorities</option>
                     {availablePriorities.map(p => (
@@ -260,16 +260,16 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
                 <div className="h-6 w-px bg-gray-700 mx-2"></div>
 
-                <div className="flex bg-gray-900 rounded-lg p-1 border border-gray-700">
+                <div className="flex bg-brand-deep/50 rounded-lg p-1 border border-white/10">
                     <button
                         onClick={() => setFilterMode('all')}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filterMode === 'all' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filterMode === 'all' ? 'bg-brand-cyan text-brand-deep font-bold shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white'}`}
                     >
                         All Issues
                     </button>
                     <button
                         onClick={() => setFilterMode('failed')}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filterMode === 'failed' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${filterMode === 'failed' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-brand-text-sec hover:text-white'}`}
                     >
                         Missed SLA Only
                     </button>
@@ -281,23 +281,23 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                             type="checkbox"
                             checked={excludeRejected}
                             onChange={(e) => setExcludeRejected(e.target.checked)}
-                            className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-800"
+                            className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-brand-cyan focus:ring-brand-cyan focus:ring-offset-gray-800"
                         />
                         Exclude Rejected
                     </label>
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex space-x-1 bg-gray-800 p-1 rounded-xl border border-gray-700 w-fit">
+                <div className="flex space-x-1 glass-panel p-1 rounded-xl w-fit">
                     <button
                         onClick={() => setActiveTab('overview')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-brand-cyan text-brand-deep shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
                     >
                         📊 Overview
                     </button>
                     <button
                         onClick={() => setActiveTab('issues')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'issues' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'issues' ? 'bg-brand-cyan text-brand-deep shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
                     >
                         📋 Issue List
                     </button>
@@ -308,11 +308,11 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {/* SLA Legend */}
-                        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                        <div className="glass-panel p-6 rounded-xl border border-white/10">
                             <h3 className="text-white font-bold mb-4 text-sm uppercase">SLA Legend</h3>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-xs text-gray-400">
-                                    <thead className="text-gray-500 border-b border-gray-700">
+                                <table className="w-full text-left text-xs text-brand-text-sec">
+                                    <thead className="text-brand-text-sec border-b border-white/10">
                                         <tr>
                                             <th className="pb-2">Tier</th>
                                             <th className="pb-2">Priority (Jira)</th>
@@ -371,7 +371,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                         {/* Charts Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {/* 1. Compliance */}
-                            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-80 flex flex-col">
+                            <div className="glass-panel p-6 rounded-xl border border-white/10 h-80 flex flex-col">
                                 <h3 className="text-white font-bold mb-4">Compliance Overview</h3>
                                 <div className="flex-1 min-h-0">
                                     <ResponsiveContainer width="100%" height="100%">
@@ -390,7 +390,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#1a262b', borderColor: '#374151', color: 'white' }} />
                                             <Legend wrapperStyle={{ paddingTop: '10px' }} height={36} />
                                         </PieChart>
                                     </ResponsiveContainer>
@@ -398,14 +398,14 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                             </div>
 
                             {/* 2. Priority BreakDown */}
-                            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-80 flex flex-col">
+                            <div className="glass-panel p-6 rounded-xl border border-white/10 h-80 flex flex-col">
                                 <h3 className="text-white font-bold mb-4">SLA by Tier (Valid)</h3>
                                 <div className="flex-1 min-h-0">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={tierStats} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
                                             <XAxis dataKey="name" stroke="#9CA3AF" interval={0} fontSize={10} />
                                             <YAxis stroke="#9CA3AF" />
-                                            <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#1a262b', borderColor: '#374151', color: 'white' }} />
                                             <Legend wrapperStyle={{ paddingTop: '10px' }} height={36} />
                                             <Bar dataKey="Met" stackId="a" fill="#10B981" />
                                             <Bar dataKey="Missed" stackId="a" fill="#EF4444" />
@@ -415,14 +415,14 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                             </div>
 
                             {/* 3. Rejected Analysis */}
-                            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-80 flex flex-col">
+                            <div className="glass-panel p-6 rounded-xl border border-white/10 h-80 flex flex-col">
                                 <h3 className="text-white font-bold mb-4">Rejected Issues by Tier</h3>
                                 <div className="flex-1 min-h-0">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={rejectedStats} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
                                             <XAxis dataKey="name" stroke="#9CA3AF" interval={0} fontSize={10} />
                                             <YAxis stroke="#9CA3AF" />
-                                            <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#1a262b', borderColor: '#374151', color: 'white' }} />
                                             <Legend wrapperStyle={{ paddingTop: '10px' }} height={36} />
                                             <Bar dataKey="Count" name="Rejected" fill="#F97316" />
                                         </BarChart>
@@ -437,14 +437,14 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                         {/* Compliance Percentage Charts */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* Reaction Percentage Compliance */}
-                            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-80">
+                            <div className="glass-panel p-6 rounded-xl border border-white/10 h-80">
                                 <h3 className="text-white font-bold mb-4 text-sm">Reaction Compliance % vs Target (95%)</h3>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <ComposedChart data={complianceChartData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                                         <XAxis dataKey="name" stroke="#9CA3AF" fontSize={10} interval={0} />
                                         <YAxis stroke="#9CA3AF" domain={[0, 100]} />
-                                        <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }} />
+                                        <Tooltip contentStyle={{ backgroundColor: '#1a262b', borderColor: '#374151', color: 'white' }} />
                                         <Legend verticalAlign="top" />
                                         <Bar dataKey="reactionActual" name="Actual %" fill="#10B981" barSize={40}>
                                             {complianceChartData.map((entry, index) => (
@@ -457,14 +457,14 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                             </div>
 
                             {/* Resolution Percentage Compliance */}
-                            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-80">
+                            <div className="glass-panel p-6 rounded-xl border border-white/10 h-80">
                                 <h3 className="text-white font-bold mb-4 text-sm">Resolution Compliance % vs Target</h3>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <ComposedChart data={complianceChartData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                                         <XAxis dataKey="name" stroke="#9CA3AF" fontSize={10} interval={0} />
                                         <YAxis stroke="#9CA3AF" domain={[0, 100]} />
-                                        <Tooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }} />
+                                        <Tooltip contentStyle={{ backgroundColor: '#1a262b', borderColor: '#374151', color: 'white' }} />
                                         <Legend verticalAlign="top" />
                                         <Bar dataKey="resolutionActual" name="Actual %" fill="#10B981" barSize={40}>
                                             {complianceChartData.map((entry, index) => (
@@ -478,13 +478,13 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                         </div>
 
                         {/* Release History Chart */}
-                        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 h-96">
+                        <div className="glass-panel p-6 rounded-xl border border-white/10 h-96">
                             <h3 className="text-white font-bold mb-4 uppercase">Daily Release History</h3>
                             <ReleaseChart issues={validIssues} />
                         </div>
 
                         {/* Throughput Analysis (Open vs Close) */}
-                        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                        <div className="glass-panel p-6 rounded-xl border border-white/10">
                             <h3 className="text-white font-bold mb-4 uppercase">Throughput Analysis (Open vs Close)</h3>
                             <ThroughputChart issues={filteredIssues} />
                         </div>
@@ -495,8 +495,8 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
             {/* Detailed Table */}
             {
                 activeTab === 'issues' && (
-                    <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="p-6 border-b border-gray-700 flex justify-between items-center">
+                    <div className="glass-panel rounded-xl border border-white/10 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-6 border-b border-white/10 flex justify-between items-center">
                             <h3 className="text-white font-bold text-lg">Analysis Details</h3>
                             <button
                                 onClick={handleClearData}
@@ -506,21 +506,21 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                             </button>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm text-gray-400">
-                                <thead className="bg-gray-900 text-gray-200 uppercase font-medium">
+                            <table className="w-full text-left text-sm text-brand-text-sec">
+                                <thead className="bg-brand-deep/80 text-white uppercase font-medium">
                                     <tr>
                                         <th className="px-6 py-4">Key</th>
                                         <th className="px-6 py-4">Priority</th>
                                         <th className="px-6 py-4">Status</th>
-                                        <th className="px-6 py-4 text-center border-l border-gray-700">Reaction (Target: 00:15)</th>
-                                        <th className="px-6 py-4 text-center border-l border-gray-700" colSpan={3}>Resolution (hh:mm)</th>
+                                        <th className="px-6 py-4 text-center border-l border-white/10">Reaction (Target: 00:15)</th>
+                                        <th className="px-6 py-4 text-center border-l border-white/10" colSpan={3}>Resolution (hh:mm)</th>
                                     </tr>
-                                    <tr className="bg-gray-800/50 text-xs">
+                                    <tr className="bg-brand-deep/30 text-xs">
                                         <th className="px-6 py-2"></th>
                                         <th className="px-6 py-2"></th>
                                         <th className="px-6 py-2"></th>
-                                        <th className="px-6 py-2 text-center border-l border-gray-700">Actual</th>
-                                        <th className="px-6 py-2 text-right border-l border-gray-700">Target</th>
+                                        <th className="px-6 py-2 text-center border-l border-white/10">Actual</th>
+                                        <th className="px-6 py-2 text-right border-l border-white/10">Target</th>
                                         <th className="px-6 py-2 text-right">Actual (Net)</th>
                                         <th className="px-6 py-2 text-right">Paused</th>
                                     </tr>

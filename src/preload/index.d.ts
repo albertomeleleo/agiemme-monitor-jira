@@ -2,9 +2,10 @@ import { ElectronAPI } from '@electron-toolkit/preload'
 import { ReleaseData } from '../renderer/src/types'
 
 interface Api {
-    getProjects: () => Promise<string[]>
+    getProjects: () => Promise<import('../shared/project-types').Project[]>
     createProject: (name: string) => Promise<boolean>
     getReleases: (projectName: string) => Promise<ReleaseData[]>
+    uploadLogo: (projectName: string) => Promise<string | null>
     uploadFile: (projectName: string) => Promise<boolean>
     deleteFile: (projectName: string, filename: string) => Promise<boolean>
     saveFile: (projectName: string, filename: string, content: string) => Promise<boolean>

@@ -20,19 +20,19 @@ export function IssueList({ releases, onDelete }: IssueListProps): JSX.Element {
                 const isOpen = expanded[release.filename]
 
                 return (
-                    <div key={release.filename} className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg transition-all group">
-                        <div className="flex bg-gray-900/50 border-b border-gray-700/50">
+                    <div key={release.filename} className="glass-panel rounded-xl border border-white/10 overflow-hidden shadow-lg transition-all group hover:border-brand-cyan/50">
+                        <div className="flex bg-brand-deep/50 border-b border-white/10">
                             <button
                                 onClick={() => toggle(release.filename)}
-                                className="flex-1 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 text-left focus:outline-none hover:bg-gray-800/80 transition-colors"
+                                className="flex-1 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 text-left focus:outline-none hover:bg-brand-card/50 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
                                     <span className={`transform transition-transform ${isOpen ? 'rotate-90' : 'rotate-0'} text-gray-500`}>▶</span>
                                     <div>
-                                        <h3 className="text-lg font-bold text-white">
+                                        <h3 className="text-lg font-bold text-white group-hover:text-brand-cyan transition-colors">
                                             {release.internalTitle || release.filename}
                                         </h3>
-                                        <p className="text-sm text-gray-400 font-mono mt-1">
+                                        <p className="text-sm text-brand-text-sec font-mono mt-1">
                                             📅 {release.date || 'Unknown'} • {release.time || '--:--'}
                                         </p>
                                     </div>
@@ -41,7 +41,7 @@ export function IssueList({ releases, onDelete }: IssueListProps): JSX.Element {
                                     <span className="bg-red-900/30 text-red-300 px-3 py-1 rounded-full border border-red-900/50 font-medium whitespace-nowrap">
                                         {release.bugfixCount} Bugfixes
                                     </span>
-                                    <span className="bg-blue-900/30 text-blue-300 px-3 py-1 rounded-full border border-blue-900/50 font-medium whitespace-nowrap">
+                                    <span className="bg-brand-cyan/20 text-brand-cyan px-3 py-1 rounded-full border border-brand-cyan/30 font-medium whitespace-nowrap shadow-[0_0_5px_rgba(0,242,255,0.2)]">
                                         {release.evolutiveCount} Evolutives
                                     </span>
                                     {release.isRegression && (
@@ -69,26 +69,26 @@ export function IssueList({ releases, onDelete }: IssueListProps): JSX.Element {
 
 
                         {isOpen && (
-                            <div className="divide-y divide-gray-700 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="divide-y divide-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
                                 {release.items.map((item, idx) => (
-                                    <div key={`${release.filename}-${idx}`} className="p-4 hover:bg-gray-700/30 transition-colors flex items-start gap-4 pl-12">
-                                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${item.type === 'bugfix' ? 'bg-red-500' : 'bg-blue-500'}`} />
+                                    <div key={`${release.filename}-${idx}`} className="p-4 hover:bg-brand-cyan/5 transition-colors flex items-start gap-4 pl-12 bg-brand-deep/30 border-l border-white/5">
+                                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 shadow-[0_0_5px_currentColor] ${item.type === 'bugfix' ? 'bg-red-500 text-red-500' : 'bg-brand-cyan text-brand-cyan'}`} />
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
                                                 {item.id ? (
-                                                    <span className="font-mono text-xs font-bold text-gray-300 bg-gray-700 px-2 py-0.5 rounded">
+                                                    <span className="font-mono text-xs font-bold text-brand-text-sec bg-brand-deep px-2 py-0.5 rounded border border-white/10">
                                                         {item.id}
                                                     </span>
                                                 ) : (
-                                                    <span className="font-mono text-xs font-bold text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+                                                    <span className="font-mono text-xs font-bold text-brand-text-sec bg-brand-deep px-2 py-0.5 rounded border border-white/5 opacity-50">
                                                         NO-ID
                                                     </span>
                                                 )}
-                                                <span className={`text-xs uppercase font-bold ${item.type === 'bugfix' ? 'text-red-400' : 'text-blue-400'}`}>
+                                                <span className={`text-xs uppercase font-bold ${item.type === 'bugfix' ? 'text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]' : 'text-brand-cyan drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]'}`}>
                                                     {item.type}
                                                 </span>
                                             </div>
-                                            <p className="text-gray-300 text-sm leading-relaxed">
+                                            <p className="text-brand-text-sec text-sm leading-relaxed">
                                                 {item.description}
                                             </p>
                                         </div>

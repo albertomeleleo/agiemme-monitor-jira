@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { ReleaseData } from './types'
+import { ReleaseData, Project } from './types'
 import { Charts } from './components/Charts'
 import { Upload } from './components/Upload'
 import { Sidebar } from './components/Sidebar'
@@ -13,8 +13,8 @@ type SortOption = 'date' | 'bugfixes' | 'evolutives' | 'regression'
 type SortDirection = 'asc' | 'desc'
 
 function App(): JSX.Element {
-    const [projects, setProjects] = useState<string[]>([])
-    const [currentProject, setCurrentProject] = useState<string>('')
+    const [projects, setProjects] = useState<Project[]>([])
+    const [currentProject, setCurrentProject] = useState<Project | null>(null)
     const [releases, setReleases] = useState<ReleaseData[]>([])
     const [loading, setLoading] = useState(false)
     const [viewMode, setViewMode] = useState<ViewMode>('cards')
@@ -42,7 +42,7 @@ function App(): JSX.Element {
         if (!currentProject) return
         setLoading(true)
         try {
-            const data = await window.api.getReleases(currentProject)
+            const data = await window.api.getReleases(currentProject.name)
             setReleases(data)
         } catch (error) {
             console.error('Failed to fetch releases:', error)
@@ -59,14 +59,17 @@ function App(): JSX.Element {
     const handleCreateProject = async (name: string) => {
         const success = await window.api.createProject(name)
         if (success) {
-            setProjects(prev => [...prev, name])
-            setCurrentProject(name)
+            // Refresh projects list
+            const list = await window.api.getProjects()
+            setProjects(list)
+            const newProj = list.find(p => p.name === name)
+            if (newProj) setCurrentProject(newProj)
         }
     }
 
     const handleDeleteRelease = async (filename: string) => {
         if (!currentProject) return
-        const success = await window.api.deleteFile(currentProject, filename)
+        const success = await window.api.deleteFile(currentProject.name, filename)
         if (success) {
             fetchReleases()
         } else {
@@ -120,7 +123,7 @@ function App(): JSX.Element {
     const [currentSection, setCurrentSection] = useState<'releases' | 'sla' | 'help'>('releases')
 
     return (
-        <div className="flex h-screen bg-gray-900 text-gray-100 font-sans overflow-hidden">
+        <div className="flex h-screen bg-brand-deep text-gray-100 font-sans overflow-hidden">
             <Sidebar
                 projects={projects}
                 currentProject={currentProject}
@@ -140,22 +143,46 @@ function App(): JSX.Element {
                             <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
                                     <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                                        {currentProject ? currentProject : 'Select a Project'}
+                                        {currentProject ? (
+                                            <>
+                                                {currentProject.logo && (
+                                                    <img src={currentProject.logo} alt={currentProject.name} className="w-8 h-8 rounded object-cover bg-white" />
+                                                )}
+                                                {currentProject.name}
+                                                <button
+                                                    onClick={async () => {
+                                                        const newLogo = await window.api.uploadLogo(currentProject.name)
+                                                        if (newLogo) {
+                                                            // Refresh projects to update logo
+                                                            const list = await window.api.getProjects()
+                                                            setProjects(list)
+                                                            // Update current project reference
+                                                            const updated = list.find(p => p.name === currentProject.name)
+                                                            if (updated) setCurrentProject(updated)
+                                                        }
+                                                    }}
+                                                    className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700 transition-colors"
+                                                    title="Upload Project Logo"
+                                                >
+                                                    ✏️
+                                                </button>
+                                            </>
+                                        ) : 'Select a Project'}
                                     </h1>
                                     <p className="text-gray-400 text-sm mt-1">
                                         {releases.length} releases found
                                     </p>
                                 </div>
                                 <div className="flex gap-4 items-center flex-wrap">
-                                    <Upload onUploadSuccess={fetchReleases} currentProject={currentProject} />
+                                    <Upload onUploadSuccess={fetchReleases} currentProject={currentProject ? currentProject.name : ''} />
 
-                                    <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700">
-                                        <span className="text-sm font-medium text-gray-400 block">Total</span>
+                                    <div className="glass-panel px-4 py-2 rounded-lg border border-white/10">
+                                        <span className="text-sm font-medium text-brand-text-sec block">Total</span>
                                         <span className="text-2xl font-bold text-white">{releases.length}</span>
                                     </div>
-                                    <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700">
-                                        <span className="text-sm font-medium text-gray-400 block">Regressions</span>
-                                        <span className="text-2xl font-bold text-red-400">{regressionCount}</span>
+                                    <div className="glass-panel px-4 py-2 rounded-lg border border-white/10">
+                                        <span className="text-sm font-medium text-brand-text-sec block">Regressions</span>
+                                        <span className="text-2xl font-bold text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">{regressionCount}</span>
                                     </div>
                                 </div>
                             </header>
@@ -172,7 +199,7 @@ function App(): JSX.Element {
                                         <input
                                             type="text"
                                             placeholder="Search in project..."
-                                            className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+                                            className="flex-1 bg-brand-deep/50 glass-panel border border-white/10 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-brand-cyan transition-shadow placeholder:text-gray-600"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
@@ -181,7 +208,7 @@ function App(): JSX.Element {
                                             <select
                                                 value={sortOption}
                                                 onChange={(e) => setSortOption(e.target.value as SortOption)}
-                                                className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="glass-panel border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-cyan hover:bg-brand-card/50"
                                             >
                                                 <option value="date">Date</option>
                                                 <option value="bugfixes">Bugfixes</option>
@@ -191,22 +218,22 @@ function App(): JSX.Element {
 
                                             <button
                                                 onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
-                                                className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm hover:bg-gray-700"
+                                                className="glass-panel border border-white/10 text-white rounded-lg px-3 py-2 text-sm hover:bg-brand-card/50 transition-colors"
                                                 title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
                                             >
                                                 {sortDirection === 'asc' ? '⬆️' : '⬇️'}
                                             </button>
 
-                                            <div className="flex bg-gray-800 p-1 rounded-lg border border-gray-700 ml-2">
+                                            <div className="flex bg-brand-deep/50 p-1 rounded-lg border border-white/10 ml-2">
                                                 <button
                                                     onClick={() => setViewMode('cards')}
-                                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'cards' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'cards' ? 'bg-brand-cyan text-brand-deep font-bold shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white'}`}
                                                 >
                                                     Cards
                                                 </button>
                                                 <button
                                                     onClick={() => setViewMode('issues')}
-                                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'issues' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'issues' ? 'bg-brand-cyan text-brand-deep font-bold shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white'}`}
                                                 >
                                                     Issues
                                                 </button>
@@ -217,18 +244,18 @@ function App(): JSX.Element {
                                     {viewMode === 'cards' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
                                             {processedReleases.map((release) => (
-                                                <div key={release.filename} className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-all shadow-lg hover:shadow-blue-500/10 flex flex-col group relative overflow-hidden">
+                                                <div key={release.filename} className="glass-panel rounded-xl p-6 border border-white/10 hover:border-brand-cyan/50 transition-all shadow-lg hover:shadow-brand-cyan/10 flex flex-col group relative overflow-hidden">
                                                     {release.isRegression && (
                                                         <div className="absolute top-0 right-0 p-2 bg-red-500/20 rounded-bl-xl border-l border-b border-red-500/30">
-                                                            <span className="text-red-400 text-xs font-bold uppercase">Regression</span>
+                                                            <span className="text-red-400 text-xs font-bold uppercase drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">Regression</span>
                                                         </div>
                                                     )}
 
                                                     <div className="mb-4 pr-10">
-                                                        <h3 className="text-lg font-semibold text-white truncate" title={`${release.internalTitle || release.filename} - ${release.date || 'Unknown Date'}`}>
+                                                        <h3 className="text-lg font-semibold text-white truncate group-hover:text-brand-cyan transition-colors" title={`${release.internalTitle || release.filename} - ${release.date || 'Unknown Date'}`}>
                                                             {release.internalTitle || release.filename} - {release.date || 'Unknown Date'}
                                                         </h3>
-                                                        <p className="text-xs text-gray-500 mt-1 font-mono">
+                                                        <p className="text-xs text-brand-text-sec mt-1 font-mono">
                                                             📅 {release.date || 'Unknown Date'}  🕒 {release.time || '--:--'}
                                                         </p>
                                                     </div>
@@ -237,24 +264,24 @@ function App(): JSX.Element {
                                                         <div className="bg-red-900/30 text-red-300 px-2 py-1 rounded border border-red-900/50">
                                                             🐛 {release.bugfixCount} Bugfixes
                                                         </div>
-                                                        <div className="bg-blue-900/30 text-blue-300 px-2 py-1 rounded border border-blue-900/50">
+                                                        <div className="bg-brand-cyan/20 text-brand-cyan px-2 py-1 rounded border border-brand-cyan/30 shadow-[0_0_5px_rgba(0,242,255,0.1)]">
                                                             ✨ {release.evolutiveCount} Evolutives
                                                         </div>
                                                     </div>
 
-                                                    <div className="text-sm text-gray-400 line-clamp-4 leading-relaxed mb-4 bg-gray-900/50 p-3 rounded flex-grow font-mono text-xs">
-                                                        {release.content.slice(0, 300)}...
+                                                    <div className="text-sm text-brand-text-sec line-clamp-4 leading-relaxed mb-4 bg-brand-deep/50 p-3 rounded flex-grow font-mono text-xs border border-white/5">
+                                                        {(release.content || '').slice(0, 300)}...
                                                     </div>
 
                                                     <div className="mt-auto flex gap-2">
                                                         <button
-                                                            className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors opacity-100 md:opacity-0 group-hover:opacity-100"
+                                                            className="flex-1 py-2 neon-button text-white rounded-lg text-sm font-medium transition-all opacity-100 md:opacity-0 group-hover:opacity-100"
                                                             onClick={() => setSelectedRelease(release)}
                                                         >
                                                             View Details
                                                         </button>
                                                         <button
-                                                            className="px-3 py-2 bg-gray-700 hover:bg-red-900/50 text-gray-400 hover:text-red-400 rounded-lg text-sm font-medium transition-colors opacity-100 md:opacity-0 group-hover:opacity-100 border border-transparent hover:border-red-900"
+                                                            className="px-3 py-2 bg-brand-deep/50 hover:bg-red-900/50 text-brand-text-sec hover:text-red-400 rounded-lg text-sm font-medium transition-colors opacity-100 md:opacity-0 group-hover:opacity-100 border border-white/10 hover:border-red-900"
                                                             onClick={(e) => {
                                                                 e.stopPropagation()
                                                                 if (confirm(`Delete ${release.filename}?`)) {
@@ -290,7 +317,7 @@ function App(): JSX.Element {
                                     Analyze Jira CSV data for SLA compliance.
                                 </p>
                             </header>
-                            <SLADashboard currentProject={currentProject} />
+                            <SLADashboard currentProject={currentProject ? currentProject.name : ''} />
                         </div>
                     )}
 

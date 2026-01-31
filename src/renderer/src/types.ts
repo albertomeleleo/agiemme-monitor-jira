@@ -1,3 +1,4 @@
+export type { Project } from '../../shared/project-types'
 export interface ReleaseData {
     filename: string
     content: string

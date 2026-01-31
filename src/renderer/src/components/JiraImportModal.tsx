@@ -150,13 +150,13 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-gray-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-700" onClick={e => e.stopPropagation()}>
+            <div className="glass-panel w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-white/10" onClick={e => e.stopPropagation()}>
 
-                <div className="p-6 border-b border-gray-700 bg-gray-900/50 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <div className="p-6 border-b border-white/10 bg-brand-deep/50 flex justify-between items-center">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
                         📥 Import from Jira
                     </h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
+                    <button onClick={onClose} className="text-brand-text-sec hover:text-white transition-colors">✕</button>
                 </div>
 
                 <div className="p-6 space-y-6">
@@ -169,40 +169,40 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                     {step === 1 && (
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Jira Host URL</label>
+                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Jira Host URL</label>
                                 <input
                                     type="text"
                                     placeholder="https://your-domain.atlassian.net"
-                                    className="w-full bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none transition-all placeholder:text-gray-600"
                                     value={config.host}
                                     onChange={e => setConfig(prev => ({ ...prev, host: e.target.value }))}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Email</label>
+                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Email</label>
                                 <input
                                     type="text"
                                     placeholder="email@example.com"
-                                    className="w-full bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none transition-all placeholder:text-gray-600"
                                     value={config.email}
                                     onChange={e => setConfig(prev => ({ ...prev, email: e.target.value }))}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">API Token</label>
+                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">API Token</label>
                                 <input
                                     type="password"
                                     placeholder="••••••••••••••••"
-                                    className="w-full bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none transition-all placeholder:text-gray-600"
                                     value={config.apiToken}
                                     onChange={e => setConfig(prev => ({ ...prev, apiToken: e.target.value }))}
                                 />
-                                <p className="text-xs text-gray-500 mt-1">Create one at <a href="#" className="underline hover:text-blue-400" onClick={() => window.open('https://id.atlassian.com/manage-profile/security/api-tokens')}>Atlassian Security</a></p>
+                                <p className="text-xs text-brand-text-sec mt-1">Create one at <a href="#" className="underline hover:text-brand-cyan" onClick={() => window.open('https://id.atlassian.com/manage-profile/security/api-tokens')}>Atlassian Security</a></p>
                             </div>
                             <button
                                 disabled={loading}
                                 onClick={handleTestConnection}
-                                className="w-full py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded font-bold transition-colors"
+                                className="w-full py-2 neon-button disabled:opacity-50 text-white rounded font-bold transition-all"
                             >
                                 {loading ? 'Connecting...' : 'Connect & Continue'}
                             </button>
@@ -212,9 +212,9 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                     {step === 2 && (
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Select Jira Project</label>
+                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Select Jira Project</label>
                                 <select
-                                    className="w-full bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none"
                                     value={selectedProjectKey}
                                     onChange={e => handleFetchVersions(e.target.value)}
                                 >
@@ -226,9 +226,9 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                             </div>
                             {selectedProjectKey && (
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Select Release (Version)</label>
+                                    <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Select Release (Version)</label>
                                     <select
-                                        className="w-full bg-gray-700 text-white rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full bg-brand-deep/50 glass-panel text-white rounded p-2 focus:ring-0 focus:border-brand-cyan border border-white/10 outline-none"
                                         value={selectedVersionId}
                                         onChange={e => setSelectedVersionId(e.target.value)}
                                         disabled={loading}
@@ -243,7 +243,7 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                             <button
                                 disabled={!selectedVersionId || loading}
                                 onClick={handlePreview}
-                                className="w-full py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded font-bold transition-colors"
+                                className="w-full py-2 neon-button disabled:opacity-50 text-white rounded font-bold transition-all"
                             >
                                 {loading ? 'Loading Issues...' : 'Preview Import'}
                             </button>
@@ -253,17 +253,17 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                     {step === 3 && (
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-gray-700 p-4 rounded text-center">
-                                    <div className="text-2xl font-bold text-red-400">{issues.filter(i => i.fields.issuetype.name === 'Bug').length}</div>
-                                    <div className="text-xs text-gray-400 uppercase">Bugs Found</div>
+                                <div className="bg-brand-deep/50 glass-panel p-4 rounded text-center border border-white/5">
+                                    <div className="text-2xl font-bold text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">{issues.filter(i => i.fields.issuetype.name === 'Bug').length}</div>
+                                    <div className="text-xs text-brand-text-sec uppercase">Bugs Found</div>
                                 </div>
-                                <div className="bg-gray-700 p-4 rounded text-center">
-                                    <div className="text-2xl font-bold text-blue-400">{issues.filter(i => i.fields.issuetype.name !== 'Bug').length}</div>
-                                    <div className="text-xs text-gray-400 uppercase">Stories/Tasks</div>
+                                <div className="bg-brand-deep/50 glass-panel p-4 rounded text-center border border-white/5">
+                                    <div className="text-2xl font-bold text-brand-cyan drop-shadow-[0_0_8px_rgba(0,242,255,0.6)]">{issues.filter(i => i.fields.issuetype.name !== 'Bug').length}</div>
+                                    <div className="text-xs text-brand-text-sec uppercase">Stories/Tasks</div>
                                 </div>
                             </div>
 
-                            <div className="max-h-48 overflow-y-auto bg-gray-900 p-2 rounded border border-gray-700 text-xs text-gray-400 font-mono">
+                            <div className="max-h-48 overflow-y-auto bg-brand-deep/80 p-2 rounded border border-white/10 text-xs text-brand-text-sec font-mono">
                                 {issues.slice(0, 10).map(i => (
                                     <div key={i.key} className="truncate">
                                         [{i.key}] {i.fields.summary}
@@ -275,13 +275,13 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                             <button
                                 disabled={loading}
                                 onClick={handleImport}
-                                className="w-full py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white rounded font-bold transition-colors"
+                                className="w-full py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white rounded font-bold transition-colors shadow-[0_0_10px_rgba(22,163,74,0.4)]"
                             >
                                 {loading ? 'Importing...' : 'Confirm Import'}
                             </button>
                             <button
                                 onClick={() => setStep(2)}
-                                className="w-full py-2 text-gray-400 hover:text-white transition-colors"
+                                className="w-full py-2 text-brand-text-sec hover:text-white transition-colors"
                             >
                                 Back
                             </button>

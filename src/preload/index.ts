@@ -3,9 +3,10 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-    getProjects: (): Promise<string[]> => ipcRenderer.invoke('get-projects'),
+    getProjects: (): Promise<any[]> => ipcRenderer.invoke('get-projects'),
     createProject: (name: string): Promise<boolean> => ipcRenderer.invoke('create-project', name),
     getReleases: (projectName: string): Promise<any[]> => ipcRenderer.invoke('get-releases', projectName),
+    uploadLogo: (projectName: string): Promise<string | null> => ipcRenderer.invoke('upload-logo', projectName),
     uploadFile: (projectName: string): Promise<boolean> => ipcRenderer.invoke('upload-file', projectName),
     deleteFile: (projectName: string, filename: string): Promise<boolean> => ipcRenderer.invoke('delete-file', projectName, filename),
     saveFile: (projectName: string, filename: string, content: string): Promise<boolean> => ipcRenderer.invoke('save-file', projectName, filename, content),
