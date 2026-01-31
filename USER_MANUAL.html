@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Release Analyzer - User Manual</title>
+    <style>
+        :root {
+            --primary: #2563EB;
+            --bg: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text: #1F2937;
+            --text-secondary: #6B7280;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        header .container {
+            padding: 0 20px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        h2 {
+            border-bottom: 2px solid #E5E7EB;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            color: var(--primary);
+        }
+        h3 {
+            margin-top: 25px;
+            color: #374151;
+        }
+        p, li {
+            color: #4B5563;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        code {
+            background: #F3F4F6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            color: #D946EF;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        .note {
+            background-color: #EFF6FF;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 20px 0;
+            color: #1E40AF;
+        }
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        @media print {
+            body { background: white; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+            header { background: white; color: black; border-bottom: 2px solid black; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1>Release Analyzer</h1>
+            <p>User Manual & Documentation</p>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div class="card">
+            <h2>1. Getting Started</h2>
+            <p>Welcome to the <strong>Release Analyzer</strong>. This application helps you track software releases and analyze Service Level Agreement (SLA) compliance based on Jira data.</p>
+            <h3>Launching the App</h3>
+            <p>Open the application from your desktop or Applications folder. Upon launch, you will see the main dashboard where you can create or select a project.</p>
+        </div>
+
+        <div class="card">
+            <h2>2. Managing Projects</h2>
+            <h3>Creating a Project</h3>
+            <ol>
+                <li>Click the <strong>+ New Project</strong> button in the sidebar.</li>
+                <li>Enter a unique project name (e.g., "MyProject 2026").</li>
+                <li>Press Enter or click "Create".</li>
+            </ol>
+            <h3>Importing Data</h3>
+            <p>You can import data in two ways:</p>
+            <ul>
+                <li><strong>CSV Upload</strong>: Click the "Upload" icon in the top right to import a standard release file.</li>
+                <li><strong>Jira Import</strong>: Use the "Import from Jira" button in the sidebar to fetch data directly (requires API Token).</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>3. SLA Dashboard</h2>
+            <p>The SLA Dashboard is the core feature for analyzing team performance. Access it by clicking <strong>⏱️ SLA Dashboard</strong> in the sidebar.</p>
+
+            <div class="note">
+                <strong>Tip:</strong> The dashboard automatically filters data for the <strong>Current Month</strong> by default. You can change this using the "Filter By: Month" dropdown.
+            </div>
+
+            <h3>Tab Navigation</h3>
+            <p>The dashboard is split into two views:</p>
+            <ul>
+                <li><strong>📊 Overview</strong>: Visual charts and high-level statistics.</li>
+                <li><strong>📋 Issue List</strong>: A detailed table of every analyzed issue.</li>
+            </ul>
+
+            <h3>Understanding the Charts</h3>
+            <ul>
+                <li><strong>Compliance Overview</strong>: A pie chart showing the percentage of issues that met vs. missed their SLA targets.</li>
+                <li><strong>SLA by Tier</strong>: Bar chart breaking down performance by priority (Critical, Major, Minor, Trivial).</li>
+                <li><strong>Throughput Analysis</strong>: Shows the volume of open vs. closed issues over time. Defaults to daily granularity for the current month.</li>
+                <li><strong>Release History</strong>: A timeline of releases referencing specific issue keys.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>4. Issue Analysis</h2>
+            <p>Switch to the <strong>Issue List</strong> tab to see granular details.</p>
+            <h3>The Detail Table</h3>
+            <p>The table displays:</p>
+            <ul>
+                <li><strong>Key</strong>: The Jira Issue Key (e.g., PROJ-123).</li>
+                <li><strong>Priority</strong>: The issue priority level.</li>
+                <li><strong>Status</strong>: Current status (Done, In Progress, etc.).</li>
+                <li><strong>Reaction Time</strong>: Time taken to pick up the issue.</li>
+                <li><strong>Resolution Time</strong>: Total time to resolve, excluding "Pause" states.</li>
+            </ul>
+            <p>Click on any row to open a full <strong>Detail Modal</strong> showing the exact timeline and calculation breakdown.</p>
+        </div>
+
+        <div class="card">
+            <h2>5. Troubleshooting</h2>
+            <h3>Common Issues</h3>
+            <ul>
+                <li><strong>"Invalid CSV Format"</strong>: Ensure your Jira export includes the required headers: <code>Issue key</code>, <code>Summary</code>, <code>Created</code>, <code>Resolved</code>, and <code>Priority</code>.</li>
+                <li><strong>"No Data Shown"</strong>: Check your filters. Ensure the "Month" filter includes the dates of your imported issues.</li>
+                <li><strong>Charts look empty</strong>: Try clicking "Reset / Upload New" to clear any stale state and re-upload your file.</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2026 Release Analyzer Team. All rights reserved.</p>
+    </div>
+
+</body>
+</html>
