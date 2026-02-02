@@ -56,7 +56,7 @@ export function parseSLA(csvContent: string): SLAReport {
         const issueType = cleanCols[colMap.get('Issue Type')!] || 'Task'
 
         // Filter: Analyze ONLY Bugs
-        if (issueType.toLowerCase() !== 'bug') continue
+        // if (issueType.toLowerCase() !== 'bug') continue
 
         // Determine SLA Tier
         const slaTier = determineSLATier(priority)

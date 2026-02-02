@@ -10,6 +10,7 @@ module.exports = {
                 'brand-card': '#1a262b',
                 'brand-cyan': '#00f2ff',
                 'brand-blue': '#2979ff',
+                'brand-purple': '#d946ef',
                 'brand-text-sec': '#b0bec5',
             }
         },

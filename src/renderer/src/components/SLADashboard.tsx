@@ -25,7 +25,8 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
     const [selectedIssue, setSelectedIssue] = useState<any | null>(null)
     const [hoveredIssue, setHoveredIssue] = useState<any | null>(null)
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
-    const [activeTab, setActiveTab] = useState<'overview' | 'issues' | 'system_overview' | 'system_issues'>('overview')
+    const [activeTab, setActiveTab] = useState<'overview' | 'issues'>('overview')
+    const [selectedIssueType, setSelectedIssueType] = useState<string>('Bug')
 
     // Sticky Header Logic
     const [isSticky, setIsSticky] = useState(false)
@@ -154,6 +155,9 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         // Filter by Status
         if (filterMode === 'failed') return !i.resolutionSLAMet || !i.reactionSLAMet
 
+        if (selectedIssueType === 'Bug' && i.issueType !== 'Bug') return false
+        if (selectedIssueType === SYSTEM_ISSUE_TYPE && i.issueType !== SYSTEM_ISSUE_TYPE) return false
+
         return true
     }) || []
 
@@ -208,55 +212,6 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         }
     })
 
-    // --- SYSTEM TAB DATA PREPARATION ---
-    const systemFilteredIssues = filteredIssues.filter(i => i.issueType === SYSTEM_ISSUE_TYPE)
-    const systemValidIssues = validIssues.filter(i => i.issueType === SYSTEM_ISSUE_TYPE)
-    const systemRejectedIssues = rejectedIssues.filter(i => i.issueType === SYSTEM_ISSUE_TYPE)
-
-    // System Stats
-    const systemChartData = [
-        { name: 'Met SLA', value: systemValidIssues.filter(i => i.resolutionSLAMet && i.reactionSLAMet).length },
-        { name: 'Missed SLA', value: systemValidIssues.filter(i => !i.resolutionSLAMet || !i.reactionSLAMet).length },
-    ]
-
-    const systemTierStats = availablePriorities.map(tier => {
-        const tierIssues = systemValidIssues.filter(i => i.slaTier === tier)
-        const met = tierIssues.filter(i => i.resolutionSLAMet && i.reactionSLAMet).length
-        const missed = tierIssues.length - met
-        return { name: tier, Met: met, Missed: missed }
-    })
-
-    const systemRejectedStats = availablePriorities.map(tier => {
-        return {
-            name: tier,
-            Count: systemRejectedIssues.filter(i => i.slaTier === tier).length
-        }
-    })
-
-    const getSystemComplianceStats = (tier: string) => {
-        const tierIssues = systemValidIssues.filter(i => i.slaTier === tier)
-        if (tierIssues.length === 0) return { reaction: 100, resolution: 100 }
-
-        const reactionMet = tierIssues.filter(i => i.reactionSLAMet).length
-        const resolutionMet = tierIssues.filter(i => i.resolutionSLAMet).length
-
-        return {
-            reaction: (reactionMet / tierIssues.length) * 100,
-            resolution: (resolutionMet / tierIssues.length) * 100
-        }
-    }
-
-    const systemComplianceChartData = availablePriorities.map(tier => {
-        const stats = getSystemComplianceStats(tier)
-        return {
-            name: tier,
-            reactionActual: stats.reaction,
-            reactionTarget: 95,
-            resolutionActual: stats.resolution,
-            resolutionTarget: tier === 'Expedite' ? 90 : 80
-        }
-    })
-
     return (
         <div className="space-y-8 animate-in fade-in duration-500 relative pb-20">
             {/* Header Stats */}
@@ -280,23 +235,25 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 onExcludeRejectedChange={setExcludeRejected}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                selectedIssueType={selectedIssueType}
+                onIssueTypeChange={setSelectedIssueType}
                 onReset={handleReset}
             />
 
             {
-                (activeTab === 'overview' || activeTab === 'system_overview') && (
+                activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {/* Legend */}
-                        <SLALegend validIssues={activeTab === 'overview' ? validIssues : systemValidIssues} />
+                        <SLALegend validIssues={validIssues} />
 
                         {/* Charts */}
                         <SLACharts
-                            chartData={activeTab === 'overview' ? chartData : systemChartData}
-                            tierStats={activeTab === 'overview' ? tierStats : systemTierStats}
-                            rejectedStats={activeTab === 'overview' ? rejectedStats : systemRejectedStats}
-                            complianceChartData={activeTab === 'overview' ? complianceChartData : systemComplianceChartData}
-                            validIssues={activeTab === 'overview' ? validIssues : systemValidIssues}
-                            filteredIssues={activeTab === 'overview' ? filteredIssues : systemFilteredIssues}
+                            chartData={chartData}
+                            tierStats={tierStats}
+                            rejectedStats={rejectedStats}
+                            complianceChartData={complianceChartData}
+                            validIssues={validIssues}
+                            filteredIssues={filteredIssues}
                             COLORS={COLORS}
                         />
                     </div>
@@ -305,10 +262,10 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
             {/* Detailed Table */}
             {
-                (activeTab === 'issues' || activeTab === 'system_issues') && (
+                activeTab === 'issues' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <SLATable
-                            issues={activeTab === 'issues' ? filteredIssues : systemFilteredIssues}
+                            issues={filteredIssues}
                             onSelectIssue={setSelectedIssue}
                             onHoverIssue={(issue, x, y) => {
                                 setHoveredIssue(issue)

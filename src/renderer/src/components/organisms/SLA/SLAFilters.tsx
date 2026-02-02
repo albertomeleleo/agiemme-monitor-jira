@@ -12,8 +12,10 @@ interface SLAFiltersProps {
     onFilterModeChange: (mode: 'all' | 'failed') => void
     excludeRejected: boolean
     onExcludeRejectedChange: (val: boolean) => void
-    activeTab: 'overview' | 'issues' | 'system_overview' | 'system_issues'
-    onTabChange: (tab: 'overview' | 'issues' | 'system_overview' | 'system_issues') => void
+    activeTab: 'overview' | 'issues'
+    onTabChange: (tab: 'overview' | 'issues') => void
+    selectedIssueType: string
+    onIssueTypeChange: (type: string) => void
     onReset: () => void
 }
 
@@ -31,6 +33,8 @@ export function SLAFilters({
     onExcludeRejectedChange,
     activeTab,
     onTabChange,
+    selectedIssueType,
+    onIssueTypeChange,
     onReset
 }: SLAFiltersProps): JSX.Element {
 
@@ -106,18 +110,20 @@ export function SLAFilters({
                 >
                     📋 Issue List
                 </button>
-                <div className="w-px bg-gray-700 my-1 mx-1"></div>
+            </div>
+
+            <div className="flex bg-brand-deep/50 rounded-lg p-1 border border-white/10 ml-4">
                 <button
-                    onClick={() => onTabChange('system_overview')}
-                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'system_overview' ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
+                    onClick={() => onIssueTypeChange('Bug')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${selectedIssueType === 'Bug' ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white'}`}
                 >
-                    🤖 System Metrics
+                    🐞 Bugs
                 </button>
                 <button
-                    onClick={() => onTabChange('system_issues')}
-                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'system_issues' ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
+                    onClick={() => onIssueTypeChange('[System] Service request')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${selectedIssueType === '[System] Service request' ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white'}`}
                 >
-                    📜 System List
+                    🤖 System
                 </button>
             </div>
 
