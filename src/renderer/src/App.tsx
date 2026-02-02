@@ -7,6 +7,8 @@ import { Sidebar } from './components/Sidebar'
 import { ReleaseDetail } from './components/ReleaseDetail'
 import { SLADashboard } from './components/SLADashboard'
 import { ProjectSettingsModal } from './components/ProjectSettingsModal'
+import { IssuesDashboard } from './components/IssuesDashboard'
+
 import { ReleaseCard } from './components/ReleaseCard'
 import { ReleaseList } from './components/ReleaseList'
 import { ReleaseCadenceChart } from './components/charts/ReleaseCadenceChart'
@@ -24,7 +26,7 @@ function App(): JSX.Element {
     const [releases, setReleases] = useState<ReleaseData[]>([])
     const [loading, setLoading] = useState(false)
     const [viewMode, setViewMode] = useState<ViewMode>('cards')
-    const [projectView, setProjectView] = useState<'releases' | 'sla'>('releases')
+    const [projectView, setProjectView] = useState<'releases' | 'sla' | 'issues'>('releases')
 
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedRelease, setSelectedRelease] = useState<ReleaseData | null>(null)
@@ -311,9 +313,11 @@ function App(): JSX.Element {
                                         </div>
                                     )}
                                 </>
-                            ) : (
+                            ) : projectView === 'sla' ? (
                                 // SLA DASHBOARD
                                 <SLADashboard currentProject={currentProject} />
+                            ) : (
+                                <IssuesDashboard currentProject={currentProject} />
                             )}
                         </>
                     ) : (

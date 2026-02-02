@@ -1,10 +1,13 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { parseJiraApiIssues } from './sla-parser'
 import { join, basename } from 'path'
 import { copyFile, mkdir, readdir, stat, unlink, readFile } from 'fs/promises'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { scanReleases } from './scanner'
 import { parseSLA } from './sla-parser'
 import { jiraService } from './services/jira-service'
+import { issuesDB } from './services/issues-db'
+import { automationService } from './services/automation-service'
 
 function createWindow(): void {
     // Create the browser window.
@@ -280,6 +283,29 @@ app.whenReady().then(() => {
     ipcMain.handle('jira-get-projects', () => jiraService.getProjects())
     ipcMain.handle('jira-get-versions', (_, projectKey) => jiraService.getVersions(projectKey))
     ipcMain.handle('jira-get-issues', (_, projectKey, versionId) => jiraService.getReleaseIssues(projectKey, versionId))
+    ipcMain.handle('jira-search-issues', (_, jql, options) => jiraService.searchIssues(jql, options))
+    // Also parse api issues
+    ipcMain.handle('jira-parse-api-issues', (_, issues, config) => {
+        return parseJiraApiIssues(issues, config)
+    })
+
+    // Issues Persistence
+    ipcMain.handle('issues-get-db', (_, projectName) => issuesDB.getDB(projectName))
+    ipcMain.handle('issues-save-db', async (_, projectName, db) => {
+        await issuesDB.saveDB(projectName, db)
+        automationService.startProject(projectName)
+    })
+    ipcMain.handle('issues-sync', async (_, projectName, jql) => {
+        // Orchestrator: Fetch from Jira -> Update DB
+        const db = await issuesDB.getDB(projectName)
+        const query = jql || db.jql
+
+        const res = await jiraService.searchIssues(query, { maxResults: 1000, fields: ['summary', 'status', 'updated', 'priority', 'assignee'] })
+        const updatedDB = await issuesDB.updateIssues(projectName, res.issues, query)
+        return updatedDB
+    })
+
+    automationService.startAll()
 
 
     createWindow()

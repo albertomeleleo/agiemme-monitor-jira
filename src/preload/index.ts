@@ -18,7 +18,12 @@ const api = {
     jiraTestConnection: (config: any): Promise<boolean> => ipcRenderer.invoke('jira-test-connection', config),
     jiraGetProjects: (): Promise<any[]> => ipcRenderer.invoke('jira-get-projects'),
     jiraGetVersions: (projectKey: string): Promise<any[]> => ipcRenderer.invoke('jira-get-versions', projectKey),
-    jiraGetIssues: (projectKey: string, versionId: string): Promise<any[]> => ipcRenderer.invoke('jira-get-issues', projectKey, versionId)
+    jiraGetIssues: (projectKey: string, versionId: string): Promise<any[]> => ipcRenderer.invoke('jira-get-issues', projectKey, versionId),
+    jiraSearchIssues: (jql: string, options?: any): Promise<any> => ipcRenderer.invoke('jira-search-issues', jql, options),
+    jiraParseApiIssues: (issues: any[], config?: any): Promise<any> => ipcRenderer.invoke('jira-parse-api-issues', issues, config),
+    // Issues
+    issuesGetDB: (projectName: string): Promise<any> => ipcRenderer.invoke('issues-get-db', projectName),
+    issuesSync: (projectName: string, jql?: string): Promise<any> => ipcRenderer.invoke('issues-sync', projectName, jql)
 }
 
 if (process.contextIsolated) {

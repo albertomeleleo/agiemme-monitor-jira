@@ -99,6 +99,63 @@ export class JiraService {
         })
     }
 
+    async searchIssues(jql: string, options: any = {}): Promise<any> {
+        const config = this.getConfig()
+        if (!config.host) throw new Error('Jira is not configured')
+
+        // Construct base URL - prioritizing standard search endpoint but parameters conform to user request
+        const baseUrl = `${this.getBaseUrl(config.host)}/rest/api/3/search/jql`
+
+        const params = new URLSearchParams()
+        params.append('jql', jql)
+        params.append('startAt', '0')
+
+        params.append('maxResults', (options.maxResults || 1000).toString())
+
+        if (options.fields) {
+            const fieldsString = Array.isArray(options.fields)
+                ? options.fields.join(',')
+                : options.fields
+            params.append('fields', fieldsString)
+        }
+
+        if (options.expand) {
+            const expandString = Array.isArray(options.expand)
+                ? options.expand.join(',')
+                : options.expand
+            params.append('expand', expandString)
+        }
+
+        if (options.nextPageToken) {
+            params.append('nextPageToken', options.nextPageToken)
+        }
+
+        const url = `${baseUrl}?${params.toString()}`
+
+        // LOGGING
+        console.log('Inizio chiamata FETCH (GET)...')
+        console.log('URL completo:', url)
+        // Convert Params to object for logging
+        const paramsObj: Record<string, string> = {}
+        for (const [key, value] of params.entries()) {
+            paramsObj[key] = value
+        }
+        console.log('Query params:', paramsObj)
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: this.getHeaders(config.email, config.apiToken)
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`JIRA Search API error (${response.status}): ${errorText}`)
+        }
+
+        const data = await response.json()
+        return data
+    }
+
     async getReleaseIssues(projectKey: string, versionId: string): Promise<JiraIssue[]> {
         const config = this.getConfig()
         if (!config.host) throw new Error('Jira is not configured')

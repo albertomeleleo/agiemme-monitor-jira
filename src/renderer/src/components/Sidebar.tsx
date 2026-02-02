@@ -9,8 +9,8 @@ interface SidebarProps {
     onSelectProject: (project: Project) => void
     onCreateProject: (name: string) => void
     onRefresh: () => void
-    currentView?: 'releases' | 'sla'
-    onSelectView?: (view: 'releases' | 'sla') => void
+    currentView?: 'releases' | 'sla' | 'issues'
+    onSelectView?: (view: 'releases' | 'sla' | 'issues') => void
 }
 
 export function Sidebar({ projects, currentProject, onSelectProject, onCreateProject, onRefresh, currentView = 'releases', onSelectView }: SidebarProps): JSX.Element {
@@ -75,6 +75,15 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                                         }`}
                                 >
                                     <span>⏱️</span> SLA Dashboard
+                                </button>
+                                <button
+                                    onClick={() => onSelectView?.('issues')}
+                                    className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'issues'
+                                        ? 'text-brand-cyan bg-brand-cyan/5'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    <span>🐛</span> Issues
                                 </button>
                             </div>
                         )}

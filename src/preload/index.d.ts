@@ -18,6 +18,11 @@ interface Api {
     jiraGetProjects: () => Promise<import('../shared/jira-types').JiraProject[]>
     jiraGetVersions: (projectKey: string) => Promise<import('../shared/jira-types').JiraVersion[]>
     jiraGetIssues: (projectKey: string, versionId: string) => Promise<import('../shared/jira-types').JiraIssue[]>
+    jiraSearchIssues: (jql: string, options?: any) => Promise<any>
+    jiraParseApiIssues: (issues: any[], config?: any) => Promise<any>
+    // Issues
+    issuesGetDB: (projectName: string) => Promise<any>
+    issuesSync: (projectName: string, jql?: string) => Promise<any>
 }
 
 declare global {

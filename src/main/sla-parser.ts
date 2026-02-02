@@ -186,3 +186,140 @@ function parseNumber(val: string | undefined): number {
     const normalized = val.replace(/"/g, '').trim().replace(/,/g, '.')
     return parseFloat(normalized) || 0
 }
+
+export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): SLAReport {
+    // Similar to parseSLA but works on API objects
+    const slaConfig = config?.sla || DEFAULT_SLA_CONFIG
+    const priorityMap = config?.priorities || DEFAULT_PRIORITY_MAP
+    const allowedIssueTypes = config?.issueTypes || DEFAULT_ISSUE_TYPES
+    const allowedRawTypes = new Set(allowedIssueTypes.map(it => it.raw.toLowerCase()))
+
+    const parsedIssues: SLAIssue[] = []
+    const byPriority: Record<string, { total: number, met: number, missed: number }> = {}
+
+    for (const issue of issuesData) {
+        const fields = issue.fields
+        if (!fields) continue
+
+        // Check Type
+        const issueType = fields.issuetype?.name || 'Task'
+        if (!allowedRawTypes.has(issueType.toLowerCase())) continue
+
+        const key = issue.key
+        const priority = fields.priority?.name || 'Medium'
+        const status = fields.status?.name || 'Unknown'
+        const created = fields.created
+        const summary = fields.summary
+
+        const slaTier = determineSLATier(priority, priorityMap)
+
+        // Calculate Times from Changelog
+        let reactionMinutes = 0
+        let waitingTime = 0
+        let workingTime = 0
+
+        // Parse Changelog
+        const history = issue.changelog?.histories || []
+        // Sort history by created asc
+        history.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime())
+
+        const transitions: { time: number, status: string }[] = []
+        transitions.push({ time: new Date(created).getTime(), status: 'Open' }) // Default start
+
+        for (const h of history) {
+            const item = h.items.find((i: any) => i.field === 'status')
+            if (item) {
+                transitions.push({
+                    time: new Date(h.created).getTime(),
+                    status: item.toString
+                })
+            }
+        }
+
+        let endTime = Date.now()
+        if (fields.resolutiondate) {
+            endTime = new Date(fields.resolutiondate).getTime()
+        }
+
+        const statusDurations: Record<string, number> = {}
+
+        // Calculate durations
+        for (let i = 0; i < transitions.length; i++) {
+            const start = transitions[i]
+            const end = (i < transitions.length - 1) ? transitions[i + 1].time : endTime
+            const durationMins = (end - start.time) / (1000 * 60)
+
+            const s = start.status
+            statusDurations[s] = (statusDurations[s] || 0) + durationMins
+        }
+
+        // Map Statuses to Categories (Reaction vs Resolution vs Pause)
+        // These hardcoded lists should ideally be in config too
+        const reactionStatuses = ['Open', 'To Do', 'Backlog', 'New'] // Statuses before "In Progress"
+        const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
+        const workStatuses = ['In Progress', 'Presa in carico', 'Developer Testing', 'READY IN HOTFIX']
+
+        // Sum up
+        for (const [s, dur] of Object.entries(statusDurations)) {
+            if (reactionStatuses.some(rs => rs.toLowerCase() === s.toLowerCase())) {
+                reactionMinutes += dur
+            }
+            if (pauseStatuses.some(ps => ps.toLowerCase() === s.toLowerCase())) {
+                waitingTime += dur
+            }
+            if (workStatuses.some(ws => ws.toLowerCase() === s.toLowerCase())) {
+                workingTime += dur
+            }
+        }
+
+        // Targets
+        const configAny = slaConfig as any
+        const targetRes = (configAny.resolution ? configAny.resolution[slaTier] : (configAny.RESOLUTION ? configAny.RESOLUTION[slaTier] : 40 * 60))
+        let targetReact = 15
+        if (configAny.reactionTime !== undefined) {
+            targetReact = typeof configAny.reactionTime === 'object' ? configAny.reactionTime[slaTier] ?? 15 : configAny.reactionTime
+        } else if (configAny.REACTION !== undefined) {
+            targetReact = configAny.REACTION
+        }
+
+        const resolutionMet = workingTime <= (targetRes + 0.001)
+        const reactionMet = reactionMinutes <= (targetReact + 0.001)
+
+        parsedIssues.push({
+            key,
+            summary,
+            status,
+            priority,
+            issueType,
+            slaTier,
+            created,
+            resolutionDate: fields.resolutiondate || undefined,
+            reactionTime: parseFloat(reactionMinutes.toFixed(2)),
+            resolutionTime: parseFloat(workingTime.toFixed(2)),
+            timeInPause: parseFloat(waitingTime.toFixed(2)),
+            timeInWork: parseFloat(workingTime.toFixed(2)),
+            reactionSLAMet: reactionMet,
+            resolutionSLAMet: resolutionMet,
+            slaTargetResolution: targetRes,
+            slaTargetReaction: targetReact
+        })
+
+        // Aggregation
+        if (!byPriority[priority]) byPriority[priority] = { total: 0, met: 0, missed: 0 }
+        byPriority[priority].total++
+        if (resolutionMet) byPriority[priority].met++
+        else byPriority[priority].missed++
+    }
+
+    const totalIssues = parsedIssues.length
+    const metResolutionSLA = parsedIssues.filter(i => i.resolutionSLAMet).length
+
+    return {
+        totalIssues,
+        metResolutionSLA,
+        missedResolutionSLA: totalIssues - metResolutionSLA,
+        compliancePercent: totalIssues > 0 ? (metResolutionSLA / totalIssues) * 100 : 100,
+        byPriority,
+        issues: parsedIssues
+    }
+}

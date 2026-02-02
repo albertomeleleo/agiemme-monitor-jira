@@ -7,8 +7,9 @@ import { SLAFilters } from './organisms/SLA/SLAFilters'
 import { SLATable } from './organisms/SLA/SLATable'
 import { SLALegend } from './organisms/SLA/SLALegend'
 import { SLACharts } from './organisms/SLA/SLACharts'
+import { JiraFetchModal } from './organisms/SLA/JiraFetchModal'
 import { IssueDetailModal } from './organisms/SLA/IssueDetailModal'
-import { Card, Typography } from '@design-system'
+import { Card, Typography, Button } from '@design-system'
 
 interface SLADashboardProps {
     currentProject: Project
@@ -34,6 +35,9 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
     const [activeTab, setActiveTab] = useState<'overview' | 'issues'>('overview')
     const [selectedIssueType, setSelectedIssueType] = useState<string>(issueTypes[0]?.raw || 'Bug')
+
+    // Jira Fetch Modal
+    const [showJiraModal, setShowJiraModal] = useState(false)
 
     // Reset selected issue type if it's not valid for current project
     useEffect(() => {
@@ -74,7 +78,9 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         const savedData = localStorage.getItem(storageKey)
         if (savedData) {
             setLoading(true)
-            // Pass config to parser
+            // Decide if savedData is CSV or JSON (Jira API cache)
+            // For now assuming CSV for legacy compat, maybe we differentiate later.
+            // Or we try parseSLA first.
             window.api.parseSLA(savedData, currentProject.config)
                 .then(result => setReport(result))
                 .catch(err => {
@@ -105,6 +111,40 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         }
     }
 
+    const handleJiraFetch = async (jql: string, maxResults: number) => {
+        setLoading(true)
+        try {
+            const data = await window.api.jiraSearchIssues(jql, {
+                maxResults,
+                expand: ['changelog'], // Crucial for SLA calculation
+                fields: ['summary', 'status', 'issuetype', 'created', 'priority', 'resolutiondate']
+            })
+
+            // Handle pagination if needed? For now just one page as per maxResults
+            let issues = data.issues || []
+            if (issues.length === 0) {
+                alert('No issues found')
+                return
+            }
+
+            const result = await window.api.jiraParseApiIssues(issues, currentProject.config)
+            setReport(result)
+            setSelectedMonth(new Date().toLocaleString('default', { month: 'long', year: 'numeric' }))
+
+            // We don't persist JSON to localStorage key used for CSV to avoid format conflicts
+            // Or we could json stringify it.
+            // localStorage.setItem(storageKey, JSON.stringify(issues)) 
+            // Reuse storage key? parseSLA currently expects CSV string.
+            // FUTURE: Unify storage or use different key.
+
+        } catch (e: any) {
+            console.error(e)
+            alert(`Jira Fetch Error: ${e.message}`)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const handleReset = () => {
         setReport(null)
         localStorage.removeItem(storageKey)
@@ -128,20 +168,41 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
     if (!report && !loading) {
         return (
-            <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96"
-                onClick={() => fileInputRef.current?.click()}
-            >
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept=".csv"
-                    onChange={handleFileUpload}
-                />
-                <div className="text-6xl mb-4 grayscale group-hover:grayscale-0 transition-all">📊</div>
-                <Typography variant="h3" className="text-white mb-2">Upload Jira CSV</Typography>
-                <Typography variant="body" className="text-gray-400">Export your issues from Jira and drop the CSV here to analyze SLA compliance.</Typography>
-            </Card>
+            <div className="flex flex-col gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-brand-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept=".csv"
+                            onChange={handleFileUpload}
+                        />
+                        <div className="text-6xl mb-6 grayscale group-hover:grayscale-0 transition-all scale-90 group-hover:scale-100 duration-300">📊</div>
+                        <Typography variant="h3" className="text-white mb-2">Upload CSV</Typography>
+                        <Typography variant="body" className="text-gray-400 max-w-xs">Drop your Jira CSV export here manually.</Typography>
+                    </Card>
+
+                    <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
+                        onClick={() => setShowJiraModal(true)}
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-brand-purple/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="text-6xl mb-6 grayscale group-hover:grayscale-0 transition-all scale-90 group-hover:scale-100 duration-300">⚡</div>
+                        <Typography variant="h3" className="text-white mb-2">Fetch from Jira</Typography>
+                        <Typography variant="body" className="text-gray-400 max-w-xs">Connect directly to Jira Cloud to analyze real-time data.</Typography>
+                    </Card>
+                </div>
+
+                {showJiraModal && (
+                    <JiraFetchModal
+                        onClose={() => setShowJiraModal(false)}
+                        onFetch={handleJiraFetch}
+                    />
+                )}
+            </div>
         )
     }
 
