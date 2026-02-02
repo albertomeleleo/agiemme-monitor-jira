@@ -12,8 +12,8 @@ interface SLAFiltersProps {
     onFilterModeChange: (mode: 'all' | 'failed') => void
     excludeRejected: boolean
     onExcludeRejectedChange: (val: boolean) => void
-    activeTab: 'overview' | 'issues'
-    onTabChange: (tab: 'overview' | 'issues') => void
+    activeTab: 'overview' | 'issues' | 'system_overview' | 'system_issues'
+    onTabChange: (tab: 'overview' | 'issues' | 'system_overview' | 'system_issues') => void
 }
 
 export function SLAFilters({
@@ -103,6 +103,19 @@ export function SLAFilters({
                     className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'issues' ? 'bg-brand-cyan text-brand-deep shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
                 >
                     📋 Issue List
+                </button>
+                <div className="w-px bg-gray-700 my-1 mx-1"></div>
+                <button
+                    onClick={() => onTabChange('system_overview')}
+                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'system_overview' ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
+                >
+                    🤖 System Metrics
+                </button>
+                <button
+                    onClick={() => onTabChange('system_issues')}
+                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'system_issues' ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
+                >
+                    📜 System List
                 </button>
             </div>
         </div>

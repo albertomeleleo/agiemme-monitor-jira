@@ -35,12 +35,17 @@ graph TD
         
         TabNav --> OverviewTab[Overview Tab]
         TabNav --> IssueListTab[Issue List Tab]
+        TabNav --> SystemMetricsTab[System Metrics Tab]
+        TabNav --> SystemListTab[System List Tab]
 
         OverviewTab --> ComplianceChart[PieChart: Compliance]
         OverviewTab --> TierChart[BarChart: SLA by Tier]
         OverviewTab --> TrendChart[TrendCharts.tsx]
         OverviewTab --> ReleaseChart[ReleaseChart.tsx]
         OverviewTab --> ThroughputChart[ThroughputChart.tsx]
+
+        SystemMetricsTab --> SystemCharts[SLACharts (System Data)]
+        SystemListTab --> SystemTable[SLATable (System Data)]
 
         IssueListTab --> DetailedTable[Analysis Details Table]
     end

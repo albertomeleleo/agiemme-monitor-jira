@@ -14,6 +14,7 @@ interface SLADashboardProps {
 }
 
 export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element {
+    const SYSTEM_ISSUE_TYPE = '[System] Service request'
     const [report, setReport] = useState<SLAReport | null>(null)
     const [loading, setLoading] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -24,7 +25,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
     const [selectedIssue, setSelectedIssue] = useState<any | null>(null)
     const [hoveredIssue, setHoveredIssue] = useState<any | null>(null)
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
-    const [activeTab, setActiveTab] = useState<'overview' | 'issues'>('overview')
+    const [activeTab, setActiveTab] = useState<'overview' | 'issues' | 'system_overview' | 'system_issues'>('overview')
 
     // Sticky Header Logic
     const [isSticky, setIsSticky] = useState(false)
@@ -200,6 +201,55 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         }
     })
 
+    // --- SYSTEM TAB DATA PREPARATION ---
+    const systemFilteredIssues = filteredIssues.filter(i => i.issueType === SYSTEM_ISSUE_TYPE)
+    const systemValidIssues = validIssues.filter(i => i.issueType === SYSTEM_ISSUE_TYPE)
+    const systemRejectedIssues = rejectedIssues.filter(i => i.issueType === SYSTEM_ISSUE_TYPE)
+
+    // System Stats
+    const systemChartData = [
+        { name: 'Met SLA', value: systemValidIssues.filter(i => i.resolutionSLAMet && i.reactionSLAMet).length },
+        { name: 'Missed SLA', value: systemValidIssues.filter(i => !i.resolutionSLAMet || !i.reactionSLAMet).length },
+    ]
+
+    const systemTierStats = availablePriorities.map(tier => {
+        const tierIssues = systemValidIssues.filter(i => i.slaTier === tier)
+        const met = tierIssues.filter(i => i.resolutionSLAMet && i.reactionSLAMet).length
+        const missed = tierIssues.length - met
+        return { name: tier, Met: met, Missed: missed }
+    })
+
+    const systemRejectedStats = availablePriorities.map(tier => {
+        return {
+            name: tier,
+            Count: systemRejectedIssues.filter(i => i.slaTier === tier).length
+        }
+    })
+
+    const getSystemComplianceStats = (tier: string) => {
+        const tierIssues = systemValidIssues.filter(i => i.slaTier === tier)
+        if (tierIssues.length === 0) return { reaction: 100, resolution: 100 }
+
+        const reactionMet = tierIssues.filter(i => i.reactionSLAMet).length
+        const resolutionMet = tierIssues.filter(i => i.resolutionSLAMet).length
+
+        return {
+            reaction: (reactionMet / tierIssues.length) * 100,
+            resolution: (resolutionMet / tierIssues.length) * 100
+        }
+    }
+
+    const systemComplianceChartData = availablePriorities.map(tier => {
+        const stats = getSystemComplianceStats(tier)
+        return {
+            name: tier,
+            reactionActual: stats.reaction,
+            reactionTarget: 95,
+            resolutionActual: stats.resolution,
+            resolutionTarget: tier === 'Expedite' ? 90 : 80
+        }
+    })
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500 relative pb-20">
             {/* Header Stats */}
@@ -226,19 +276,19 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
             />
 
             {
-                activeTab === 'overview' && (
+                (activeTab === 'overview' || activeTab === 'system_overview') && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {/* Legend */}
-                        <SLALegend validIssues={validIssues} />
+                        <SLALegend validIssues={activeTab === 'overview' ? validIssues : systemValidIssues} />
 
                         {/* Charts */}
                         <SLACharts
-                            chartData={chartData}
-                            tierStats={tierStats}
-                            rejectedStats={rejectedStats}
-                            complianceChartData={complianceChartData}
-                            validIssues={validIssues}
-                            filteredIssues={filteredIssues}
+                            chartData={activeTab === 'overview' ? chartData : systemChartData}
+                            tierStats={activeTab === 'overview' ? tierStats : systemTierStats}
+                            rejectedStats={activeTab === 'overview' ? rejectedStats : systemRejectedStats}
+                            complianceChartData={activeTab === 'overview' ? complianceChartData : systemComplianceChartData}
+                            validIssues={activeTab === 'overview' ? validIssues : systemValidIssues}
+                            filteredIssues={activeTab === 'overview' ? filteredIssues : systemFilteredIssues}
                             COLORS={COLORS}
                         />
                     </div>
@@ -247,10 +297,10 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
             {/* Detailed Table */}
             {
-                activeTab === 'issues' && (
+                (activeTab === 'issues' || activeTab === 'system_issues') && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <SLATable
-                            issues={filteredIssues}
+                            issues={activeTab === 'issues' ? filteredIssues : systemFilteredIssues}
                             onSelectIssue={setSelectedIssue}
                             onHoverIssue={(issue, x, y) => {
                                 setHoveredIssue(issue)
