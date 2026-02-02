@@ -86,6 +86,13 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         }
     }
 
+    const handleReset = () => {
+        setReport(null)
+        localStorage.removeItem(storageKey)
+        setSelectedIssue(null)
+        setHoveredIssue(null)
+    }
+
     const uniqueMonths = (issues: any[]): string[] => {
         const months = new Set<string>()
         issues.forEach(i => {
@@ -273,6 +280,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 onExcludeRejectedChange={setExcludeRejected}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                onReset={handleReset}
             />
 
             {

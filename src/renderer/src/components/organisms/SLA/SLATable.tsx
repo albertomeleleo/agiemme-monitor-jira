@@ -14,15 +14,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
         <Card variant="glass" className="!p-0 border border-white/10 overflow-hidden">
             <div className="p-6 border-b border-white/10 flex justify-between items-center bg-brand-deep/30">
                 <Typography variant="h3" className="text-white font-bold text-lg">Analysis Details</Typography>
-                <button
-                    onClick={() => {
-                        // Reset logic handled by parent or just reload
-                        window.location.reload()
-                    }}
-                    className="text-sm text-red-400 hover:text-red-300 font-medium border border-red-900/50 px-3 py-1.5 rounded-lg hover:bg-red-900/20 transition-colors"
-                >
-                    🗑 Reset / Upload New
-                </button>
+
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-brand-text-sec">

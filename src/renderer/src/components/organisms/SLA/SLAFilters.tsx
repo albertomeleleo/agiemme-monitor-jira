@@ -14,6 +14,7 @@ interface SLAFiltersProps {
     onExcludeRejectedChange: (val: boolean) => void
     activeTab: 'overview' | 'issues' | 'system_overview' | 'system_issues'
     onTabChange: (tab: 'overview' | 'issues' | 'system_overview' | 'system_issues') => void
+    onReset: () => void
 }
 
 export function SLAFilters({
@@ -29,7 +30,8 @@ export function SLAFilters({
     excludeRejected,
     onExcludeRejectedChange,
     activeTab,
-    onTabChange
+    onTabChange,
+    onReset
 }: SLAFiltersProps): JSX.Element {
 
     return (
@@ -116,6 +118,15 @@ export function SLAFilters({
                     className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'system_issues' ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
                 >
                     📜 System List
+                </button>
+            </div>
+
+            <div className="ml-4 border-l border-gray-700 pl-4">
+                <button
+                    onClick={onReset}
+                    className="flex items-center gap-2 text-xs text-red-400 hover:text-red-300 font-medium border border-red-900/50 px-3 py-1.5 rounded-lg hover:bg-red-900/20 transition-colors"
+                >
+                    <span>🗑</span> Reset
                 </button>
             </div>
         </div>
