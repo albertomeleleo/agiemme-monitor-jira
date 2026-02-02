@@ -1,12 +1,17 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { ReleaseData, Project } from './types'
-import { Charts } from './components/Charts'
+
 import { Upload } from './components/Upload'
 import { Sidebar } from './components/Sidebar'
-import { IssueList } from './components/IssueList'
+
 import { ReleaseDetail } from './components/ReleaseDetail'
 import { SLADashboard } from './components/SLADashboard'
-import { HelpPage } from './components/HelpPage'
+import { ProjectSettingsModal } from './components/ProjectSettingsModal'
+import { ReleaseCard } from './components/ReleaseCard'
+import { ReleaseList } from './components/ReleaseList'
+import { ReleaseCadenceChart } from './components/charts/ReleaseCadenceChart'
+import { IssueTypeDistributionChart } from './components/charts/IssueTypeDistributionChart'
+import { ReleaseTimelineChart } from './components/charts/ReleaseTimelineChart'
 import { Typography, Card, Badge, Button, Input, Select } from '@design-system'
 
 type ViewMode = 'cards' | 'issues' | 'sla'
@@ -19,9 +24,11 @@ function App(): JSX.Element {
     const [releases, setReleases] = useState<ReleaseData[]>([])
     const [loading, setLoading] = useState(false)
     const [viewMode, setViewMode] = useState<ViewMode>('cards')
+    const [projectView, setProjectView] = useState<'releases' | 'sla'>('releases')
 
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedRelease, setSelectedRelease] = useState<ReleaseData | null>(null)
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
     // Sorting State
     const [sortOption, setSortOption] = useState<SortOption>('date')
@@ -39,6 +46,15 @@ function App(): JSX.Element {
         loadProjects()
     }, [])
 
+    const refreshProjects = async () => {
+        const list = await window.api.getProjects()
+        setProjects(list)
+        if (currentProject) {
+            const updated = list.find(p => p.name === currentProject.name)
+            if (updated) setCurrentProject(updated)
+        }
+    }
+
     const fetchReleases = useCallback(async () => {
         if (!currentProject) return
         setLoading(true)
@@ -54,17 +70,23 @@ function App(): JSX.Element {
     }, [currentProject])
 
     useEffect(() => {
-        fetchReleases()
-    }, [fetchReleases])
+        if (currentProject) {
+            fetchReleases()
+        } else {
+            setReleases([])
+        }
+    }, [currentProject, fetchReleases])
 
     const handleCreateProject = async (name: string) => {
         const success = await window.api.createProject(name)
         if (success) {
-            // Refresh projects list
             const list = await window.api.getProjects()
             setProjects(list)
             const newProj = list.find(p => p.name === name)
-            if (newProj) setCurrentProject(newProj)
+            if (newProj) {
+                setCurrentProject(newProj)
+                setProjectView('releases')
+            }
         }
     }
 
@@ -105,7 +127,6 @@ function App(): JSX.Element {
                     valB = b.evolutiveCount
                     break
                 case 'regression':
-                    // Regression first (true > false)
                     valA = a.isRegression ? 1 : 0
                     valB = b.isRegression ? 1 : 0
                     break
@@ -121,86 +142,100 @@ function App(): JSX.Element {
 
     const regressionCount = releases.filter(r => r.isRegression).length
 
-    const [currentSection, setCurrentSection] = useState<'releases' | 'sla' | 'help'>('releases')
-
     return (
         <div className="flex h-screen bg-brand-deep text-gray-100 font-sans overflow-hidden">
             <Sidebar
                 projects={projects}
                 currentProject={currentProject}
-                onSelectProject={setCurrentProject}
+                currentView={projectView}
+                onSelectView={setProjectView}
+                onSelectProject={(p) => {
+                    if (p.name !== currentProject?.name) {
+                        setCurrentProject(p)
+                        setProjectView('releases')
+                    }
+                }}
                 onCreateProject={handleCreateProject}
-                currentSection={currentSection}
-                onSelectSection={setCurrentSection}
-                onRefresh={fetchReleases}
+                onRefresh={refreshProjects}
             />
 
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-6 relative">
 
-                    {/* RELEASE SECTION */}
-                    {currentSection === 'releases' && (
+                    {currentProject ? (
                         <>
+                            {/* HEADER */}
                             <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
-                                    <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                                        {currentProject ? (
-                                            <>
-                                                {currentProject.logo && (
-                                                    <img src={currentProject.logo} alt={currentProject.name} className="w-8 h-8 rounded object-cover bg-white" />
-                                                )}
-                                                {currentProject.name}
-                                                <Button
-                                                    variant="icon"
-                                                    onClick={async () => {
-                                                        const newLogo = await window.api.uploadLogo(currentProject.name)
-                                                        if (newLogo) {
-                                                            const list = await window.api.getProjects()
-                                                            setProjects(list)
-                                                            const updated = list.find(p => p.name === currentProject.name)
-                                                            if (updated) setCurrentProject(updated)
-                                                        }
-                                                    }}
-                                                    title="Upload Project Logo"
-                                                >
-                                                    ✏️
-                                                </Button>
-                                            </>
-                                        ) : 'Select a Project'}
-                                    </h1>
-                                    <Typography variant="caption" className="mt-1">
-                                        {releases.length} releases found
-                                    </Typography>
-                                </div>
-                                <div className="flex gap-4 items-center flex-wrap">
-                                    <Upload onUploadSuccess={fetchReleases} currentProject={currentProject ? currentProject.name : ''} />
+                                    <div className="flex items-center gap-2">
+                                        {currentProject.logo && (
+                                            <img src={currentProject.logo} alt={currentProject.name} className="w-8 h-8 rounded object-cover bg-white" />
+                                        )}
+                                        <h1 className="text-2xl font-bold tracking-tight text-white">
+                                            {currentProject.name}
+                                        </h1>
+                                        <div className="flex gap-1 ml-2">
+                                            <Button variant="icon" onClick={() => document.getElementById('logo-upload')?.click()} title="Upload Logo">✏️</Button>
 
-                                    <Card variant="glass" className="!px-4 !py-2 border border-white/10">
-                                        <Typography variant="caption" className="block text-brand-text-sec">Total</Typography>
-                                        <Typography variant="h3" className="text-white">{releases.length}</Typography>
-                                    </Card>
-                                    <Card variant="glass" className="!px-4 !py-2 border border-white/10">
-                                        <Typography variant="caption" className="block text-brand-text-sec">Regressions</Typography>
-                                        <Typography variant="h3" className="text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">{regressionCount}</Typography>
-                                    </Card>
+                                            {/* Hidden File Input for Logo */}
+                                            <input
+                                                id="logo-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={async (e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        const newLogo = await window.api.uploadLogo(currentProject.name)
+                                                        if (newLogo) refreshProjects()
+                                                    }
+                                                }}
+                                            />
+
+                                            <Button variant="icon" onClick={() => setIsSettingsOpen(true)} title="Settings" className="text-gray-400 hover:text-brand-cyan">⚙️</Button>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                {/* Stats & Upload (Visible only in Releases view) */}
+                                {projectView === 'releases' && (
+                                    <div className="flex gap-4 items-center flex-wrap">
+                                        <Upload onUploadSuccess={fetchReleases} currentProject={currentProject.name} />
+                                        <Card variant="glass" className="!px-4 !py-2 border border-white/10">
+                                            <Typography variant="caption" className="block text-brand-text-sec">Total</Typography>
+                                            <Typography variant="h3" className="text-white">{releases.length}</Typography>
+                                        </Card>
+                                        <Card variant="glass" className="!px-4 !py-2 border border-white/10">
+                                            <Typography variant="caption" className="block text-brand-text-sec">Regressions</Typography>
+                                            <Typography variant="h3" className="text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">{regressionCount}</Typography>
+                                        </Card>
+                                    </div>
+                                )}
                             </header>
 
-                            {loading ? (
-                                <div className="flex items-center justify-center h-64">
-                                    <div className="text-xl animate-pulse text-gray-500">Loading Releases...</div>
-                                </div>
-                            ) : (
+                            {/* MAIN CONTENT */}
+                            {projectView === 'releases' ? (
                                 <>
-                                    <Charts releases={releases} />
+                                    {/* CHARTS */}
+                                    <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+                                        <div className="lg:col-span-2">
+                                            <ReleaseCadenceChart releases={releases} />
+                                        </div>
+                                        <IssueTypeDistributionChart releases={releases} />
+                                        <ReleaseTimelineChart releases={releases} />
+                                    </div>
 
-                                    <div className="mb-6 flex flex-col md:flex-row gap-4">
-                                        <Input
-                                            fullWidth
-                                            placeholder="Search in project..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
+                                    {/* FILTERS & CONTROLS */}
+                                    <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
+                                        <div className="relative flex-1">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+                                            <Input
+                                                fullWidth
+                                                placeholder="Search in project..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="pl-10"
+                                            />
+                                        </div>
 
                                         <div className="flex gap-2">
                                             <Select
@@ -224,100 +259,89 @@ function App(): JSX.Element {
                                             <div className="flex bg-brand-deep/50 p-1 rounded-lg border border-white/10 ml-2">
                                                 <button
                                                     onClick={() => setViewMode('cards')}
-                                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'cards' ? 'bg-brand-cyan text-brand-deep font-bold shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white'}`}
+                                                    className={`p-2 rounded-md transition-colors ${viewMode === 'cards' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
+                                                    title="Card View"
                                                 >
-                                                    Cards
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                                                 </button>
                                                 <button
                                                     onClick={() => setViewMode('issues')}
-                                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${viewMode === 'issues' ? 'bg-brand-cyan text-brand-deep font-bold shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white'}`}
+                                                    className={`p-2 rounded-md transition-colors ${viewMode === 'issues' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
+                                                    title="List View"
                                                 >
-                                                    Issues
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {viewMode === 'cards' ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
-                                            {processedReleases.map((release) => (
-                                                <Card key={release.filename} variant="glass" hoverable className="flex flex-col group relative overflow-hidden group">
-                                                    {release.isRegression && (
-                                                        <div className="absolute top-0 right-0 p-2 bg-red-500/20 rounded-bl-xl border-l border-b border-red-500/30">
-                                                            <Typography variant="mono" className="text-red-400 font-bold uppercase drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">Regression</Typography>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="mb-4 pr-10">
-                                                        <h3 className="text-lg font-semibold text-white truncate group-hover:text-brand-cyan transition-colors" title={`${release.internalTitle || release.filename} - ${release.date || 'Unknown Date'}`}>
-                                                            {release.internalTitle || release.filename} - {release.date || 'Unknown Date'}
-                                                        </h3>
-                                                        <Typography variant="mono" className="text-xs text-brand-text-sec mt-1">
-                                                            📅 {release.date || 'Unknown Date'}  🕒 {release.time || '--:--'}
-                                                        </Typography>
-                                                    </div>
-
-                                                    <div className="flex gap-2 mb-4">
-                                                        <Badge variant="bugfix" label={`${release.bugfixCount} Bugfixes`} />
-                                                        <Badge variant="evolutive" label={`${release.evolutiveCount} Evolutives`} />
-                                                    </div>
-
-                                                    <div className="text-sm text-brand-text-sec line-clamp-4 leading-relaxed mb-4 p-3 rounded flex-grow font-mono text-xs border border-white/5 bg-brand-deep/50">
-                                                        {(release.content || '').slice(0, 300)}...
-                                                    </div>
-
-                                                    <div className="mt-auto flex gap-2">
-                                                        <Button
-                                                            variant="primary"
-                                                            className="flex-1 opacity-100 md:opacity-0 group-hover:opacity-100"
-                                                            onClick={() => setSelectedRelease(release)}
-                                                        >
-                                                            View Details
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            className="opacity-100 md:opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-brand-deep/50 border border-white/10"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                if (confirm(`Delete ${release.filename}?`)) {
-                                                                    handleDeleteRelease(release.filename)
-                                                                }
-                                                            }}
-                                                            title="Delete"
-                                                        >
-                                                            🗑️
-                                                        </Button>
-                                                    </div>
-                                                </Card>
-                                            ))}
+                                    {/* RELEASE LIST */}
+                                    {loading ? (
+                                        <div className="text-center py-20">
+                                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-cyan mx-auto mb-4"></div>
+                                            <Typography variant="body" className="text-gray-400">Loading releases...</Typography>
+                                        </div>
+                                    ) : processedReleases.length === 0 ? (
+                                        <div className="text-center py-20 border-2 border-dashed border-white/10 rounded-xl">
+                                            <Typography variant="h3" className="text-gray-500 mb-2">No Releases Found</Typography>
+                                            <Typography variant="body" className="text-gray-400">Create a release folder or upload specific files.</Typography>
                                         </div>
                                     ) : (
-                                        <div className="pb-12">
-                                            <IssueList releases={processedReleases} onDelete={handleDeleteRelease} />
+                                        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+                                            {viewMode === 'cards' ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                                    {processedReleases.map((release) => (
+                                                        <ReleaseCard
+                                                            key={release.version}
+                                                            release={release}
+                                                            onClick={() => setSelectedRelease(release)}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <ReleaseList
+                                                    releases={processedReleases}
+                                                    onSelect={setSelectedRelease}
+                                                />
+                                            )}
                                         </div>
                                     )}
                                 </>
+                            ) : (
+                                // SLA DASHBOARD
+                                <SLADashboard currentProject={currentProject} />
                             )}
                         </>
-                    )}
-
-                    {/* SLA DASHBOARD */}
-                    {currentSection === 'sla' && (
-                        currentProject ? <SLADashboard currentProject={currentProject.name} /> : <div>Please select a project</div>
-                    )}
-
-                    {/* HELP PAGE */}
-                    {currentSection === 'help' && (
-                        <HelpPage />
+                    ) : (
+                        // NO PROJECT SELECTED
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                            <div className="w-24 h-24 mb-6 rounded-2xl bg-gradient-to-br from-brand-cyan/20 to-brand-purple/20 flex items-center justify-center border border-white/10 animate-float">
+                                <span className="text-4xl">🚀</span>
+                            </div>
+                            <Typography variant="h2" className="text-white mb-2">Welcome to Release Analyzer</Typography>
+                            <Typography variant="body" className="text-gray-400 max-w-md">
+                                Select a project from the sidebar or create a new one to start.
+                            </Typography>
+                        </div>
                     )}
 
                 </div>
             </div>
 
+            {/* MODALS */}
             {selectedRelease && (
                 <ReleaseDetail
                     release={selectedRelease}
                     onClose={() => setSelectedRelease(null)}
+                />
+            )}
+
+            {currentProject && (
+                <ProjectSettingsModal
+                    project={currentProject}
+                    isOpen={isSettingsOpen}
+                    onClose={() => setIsSettingsOpen(false)}
+                    onSave={refreshProjects}
                 />
             )}
         </div>

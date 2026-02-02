@@ -16,6 +16,7 @@ interface SLAFiltersProps {
     onTabChange: (tab: 'overview' | 'issues') => void
     selectedIssueType: string
     onIssueTypeChange: (type: string) => void
+    issueTypes: { raw: string, label: string }[]
     onReset: () => void
 }
 
@@ -35,6 +36,7 @@ export function SLAFilters({
     onTabChange,
     selectedIssueType,
     onIssueTypeChange,
+    issueTypes,
     onReset
 }: SLAFiltersProps): JSX.Element {
 
@@ -113,18 +115,15 @@ export function SLAFilters({
             </div>
 
             <div className="flex bg-brand-deep/50 rounded-lg p-1 border border-white/10 ml-4">
-                <button
-                    onClick={() => onIssueTypeChange('Bug')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${selectedIssueType === 'Bug' ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white'}`}
-                >
-                    🐞 Bugs
-                </button>
-                <button
-                    onClick={() => onIssueTypeChange('[System] Service request')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${selectedIssueType === '[System] Service request' ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white'}`}
-                >
-                    🤖 System
-                </button>
+                {issueTypes.map((type, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => onIssueTypeChange(type.raw)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${selectedIssueType === type.raw ? 'bg-brand-purple text-white shadow-lg shadow-brand-purple/20' : 'text-brand-text-sec hover:text-white'}`}
+                    >
+                        {type.label}
+                    </button>
+                ))}
             </div>
 
             <div className="ml-4 border-l border-gray-700 pl-4">

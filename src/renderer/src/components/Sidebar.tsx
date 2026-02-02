@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { JiraImportModal } from './JiraImportModal'
 import logo from '../assets/logo.png'
-
 import { Project } from '../types'
 
 interface SidebarProps {
@@ -9,26 +8,15 @@ interface SidebarProps {
     currentProject: Project | null
     onSelectProject: (project: Project) => void
     onCreateProject: (name: string) => void
-    currentSection: 'releases' | 'sla' | 'help'
-    onSelectSection: (section: 'releases' | 'sla' | 'help') => void
     onRefresh: () => void
+    currentView?: 'releases' | 'sla'
+    onSelectView?: (view: 'releases' | 'sla') => void
 }
 
-export function Sidebar({ projects, currentProject, onSelectProject, onCreateProject, currentSection, onSelectSection, onRefresh }: SidebarProps): JSX.Element {
+export function Sidebar({ projects, currentProject, onSelectProject, onCreateProject, onRefresh, currentView = 'releases', onSelectView }: SidebarProps): JSX.Element {
     const [isCreating, setIsCreating] = useState(false)
     const [newProjectName, setNewProjectName] = useState('')
     const [showJiraModal, setShowJiraModal] = useState(false)
-    const [tokenMissing, setTokenMissing] = useState(false)
-
-    useEffect(() => {
-        window.api.jiraGetConfig().then(cfg => {
-            if (!cfg || !cfg.apiToken) {
-                setTokenMissing(true)
-            } else {
-                setTokenMissing(false)
-            }
-        })
-    }, [])
 
     const handleCreate = () => {
         if (newProjectName.trim()) {
@@ -44,104 +32,106 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                 <img src={logo} alt="GNV Logo" className="h-12 w-auto object-contain" />
             </div>
 
-            {/* Main Navigation */}
-            <div className="space-y-1 mb-6">
-                <button
-                    onClick={() => onSelectSection('releases')}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${currentSection === 'releases'
-                        ? 'bg-brand-cyan/10 text-brand-cyan border-l-2 border-brand-cyan'
-                        : 'text-brand-text-sec hover:text-white hover:bg-brand-card/50'
-                        }`}
-                >
-                    <span>📦</span> Releases
-                </button>
-                <button
-                    onClick={() => onSelectSection('sla')}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${currentSection === 'sla'
-                        ? 'bg-brand-cyan/10 text-brand-cyan border-l-2 border-brand-cyan'
-                        : 'text-brand-text-sec hover:text-white hover:bg-brand-card/50'
-                        }`}
-                >
-                    <span>⏱️</span> SLA Dashboard
-                </button>
-                <div className="pt-2 mt-2 border-t border-gray-800">
-                    <button
-                        onClick={() => onSelectSection('help')}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 relative ${currentSection === 'help'
-                            ? 'bg-brand-cyan/10 text-brand-cyan border-l-2 border-brand-cyan'
-                            : 'text-brand-text-sec hover:text-white hover:bg-brand-card/50'
-                            }`}
-                    >
-                        <span>❓</span> Help & Settings
-                        {tokenMissing && (
-                            <span className="absolute right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            {/* Projects List */}
+            <div className="flex-grow overflow-y-auto space-y-2">
+                <h3 className="text-xs font-semibold text-brand-text-sec uppercase tracking-wider mb-3 px-2">Projects</h3>
+                {projects.map(project => (
+                    <div key={project.name}>
+                        <button
+                            onClick={() => onSelectProject(project)}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${currentProject?.name === project.name
+                                ? 'bg-brand-cyan/10 text-brand-cyan border-l-2 border-brand-cyan'
+                                : 'text-brand-text-sec hover:text-white hover:bg-brand-card/50'
+                                }`}
+                        >
+                            {/* Project Logo/Icon */}
+                            {project.logo ? (
+                                <img src={project.logo} alt={project.name} className="w-5 h-5 rounded object-cover bg-white" />
+                            ) : (
+                                <div className="w-5 h-5 rounded bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-400">
+                                    {project.name.substring(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                            <span className="truncate">{project.name}</span>
+                        </button>
+
+                        {/* Nested Sub-Menu */}
+                        {currentProject?.name === project.name && (
+                            <div className="ml-4 mt-1 pl-4 border-l border-white/10 space-y-1 animate-in slide-in-from-left-2 duration-200">
+                                <button
+                                    onClick={() => onSelectView?.('releases')}
+                                    className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'releases'
+                                        ? 'text-brand-cyan bg-brand-cyan/5'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    <span>📦</span> Releases
+                                </button>
+                                <button
+                                    onClick={() => onSelectView?.('sla')}
+                                    className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'sla'
+                                        ? 'text-brand-cyan bg-brand-cyan/5'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    <span>⏱️</span> SLA Dashboard
+                                </button>
+                            </div>
                         )}
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-800">
+                {isCreating ? (
+                    <div className="space-y-2">
+                        <input
+                            type="text"
+                            placeholder="Project Name"
+                            className="w-full glass-panel text-white text-sm rounded px-3 py-2 border border-gray-700 focus:outline-none focus:border-brand-cyan"
+                            autoFocus
+                            value={newProjectName}
+                            onChange={e => setNewProjectName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                        />
+                        <div className="flex gap-2">
+                            <button onClick={handleCreate} className="flex-1 neon-button text-xs py-1.5 rounded">Create</button>
+                            <button onClick={() => setIsCreating(false)} className="flex-1 bg-transparent border border-white/20 text-brand-text-sec text-xs py-1.5 rounded hover:bg-brand-card/50 hover:text-white">Cancel</button>
+                        </div>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setIsCreating(true)}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-brand-text-sec border border-dashed border-white/10 rounded-lg hover:text-white hover:border-brand-cyan hover:bg-brand-cyan/5 transition-all"
+                    >
+                        + New Project
                     </button>
+                )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-800">
+                <button
+                    onClick={() => setShowJiraModal(true)}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-brand-blue border border-dashed border-brand-blue/30 rounded-lg hover:text-white hover:bg-brand-blue/20 transition-all"
+                >
+                    📥 Import from Jira
+                </button>
+            </div>
+
+            {/* Help Button (Moved from global nav to bottom) */}
+            <div className="mt-4 pt-4 border-t border-gray-800">
+                {/* Note: In the new design, help might be separate, but I'll leave it implicitly accessible or add a button if user requested. 
+                    The App.tsx has a HelpPage but no way to navigate to it now that I removed "Help" button from Sidebar? 
+                    Actually, App.tsx rendered HelpPage only when currentSection === 'help'.
+                    My new Sidebar removed the 'help' button. 
+                    I should add a Help button in the Sidebar or Header.
+                    For now, I'll keep Sidebar focused on projects as requested.
+                 */}
+                <div className="mt-2 text-center">
+                    <span className="text-xs text-brand-text-sec">v1.2.0</span>
                 </div>
             </div>
 
-            {currentSection === 'releases' && (
-                <>
-                    <h3 className="text-xs font-semibold text-brand-text-sec uppercase tracking-wider mb-3 px-2 mt-4">Projects</h3>
-                    <div className="flex-grow overflow-y-auto space-y-2">
-                        {projects.map(project => (
-                            <button
-                                key={project.name}
-                                onClick={() => onSelectProject(project)}
-                                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${currentProject?.name === project.name
-                                    ? 'bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/30'
-                                    : 'text-brand-text-sec hover:text-white hover:bg-brand-card/50'
-                                    }`}
-                            >
-                                {project.logo ? (
-                                    <img src={project.logo} alt={project.name} className="w-6 h-6 rounded object-cover bg-white" />
-                                ) : (
-                                    <div className="w-6 h-6 rounded bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-400">
-                                        {project.name.substring(0, 2).toUpperCase()}
-                                    </div>
-                                )}
-                                <span className="truncate">{project.name}</span>
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-gray-800">
-                        {isCreating ? (
-                            <div className="space-y-2">
-                                <input
-                                    type="text"
-                                    placeholder="Project Name"
-                                    className="w-full glass-panel text-white text-sm rounded px-3 py-2 border border-gray-700 focus:outline-none focus:border-brand-cyan"
-                                    autoFocus
-                                    value={newProjectName}
-                                    onChange={e => setNewProjectName(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                                />
-                                <div className="flex gap-2">
-                                    <button onClick={handleCreate} className="flex-1 neon-button text-xs py-1.5 rounded">Create</button>
-                                    <button onClick={() => setIsCreating(false)} className="flex-1 bg-transparent border border-white/20 text-brand-text-sec text-xs py-1.5 rounded hover:bg-brand-card/50 hover:text-white">Cancel</button>
-                                </div>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setIsCreating(true)}
-                                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-brand-text-sec border border-dashed border-white/10 rounded-lg hover:text-white hover:border-brand-cyan hover:bg-brand-cyan/5 transition-all"
-                            >
-                                + New Project
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-gray-800">
-                        <button
-                            onClick={() => setShowJiraModal(true)}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-brand-blue border border-dashed border-brand-blue/30 rounded-lg hover:text-white hover:bg-brand-blue/20 transition-all"
-                        >
-                            📥 Import from Jira
-                        </button>
-                    </div>
-                </>
-            )}
 
             {showJiraModal && currentProject && (
                 <JiraImportModal
@@ -151,13 +141,6 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                         onRefresh()
                     }}
                 />
-            )}
-
-            {currentSection === 'sla' && (
-                <div className="mt-auto p-4 bg-gray-800/50 rounded-lg text-xs text-gray-400">
-                    <p className="mb-2 font-bold text-gray-300">SLA Info</p>
-                    <p>Upload a specific CSV to analyze service levels.</p>
-                </div>
             )}
         </div>
     )

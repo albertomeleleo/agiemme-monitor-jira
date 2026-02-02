@@ -1,32 +1,43 @@
 import { SLAIssue, SLAReport } from '../shared/sla-types'
+import { ProjectConfig } from '../shared/project-types'
 
-// SLA Config (Minutes)
-const SLA_CONFIG = {
-    REACTION: 15, // 15 mins for all
+// Default Config (Fallback)
+const DEFAULT_SLA_CONFIG = {
+    REACTION: 15, // 15 mins
     RESOLUTION: {
-        'Expedite': 240,  // 4h * 60
-        'Critical': 480,  // 8h * 60
-        'Major': 960,     // 16h * 60
-        'Minor': 1920,    // 32h * 60
-        'Trivial': 2400   // 40h * 60
+        'Expedite': 240,  // 4h
+        'Critical': 480,  // 8h
+        'Major': 960,     // 16h
+        'Minor': 1920,    // 32h
+        'Trivial': 2400   // 40h
     }
 }
 
-function determineSLATier(priority: string): string {
-    const p = priority.toLowerCase()
-
-    // Expedite: Priority Highest or Critical
-    if (p === 'highest' || p === 'critical') return 'Expedite'
-
-    if (p === 'high') return 'Critical'
-    if (p === 'medium') return 'Major'
-    if (p === 'low') return 'Minor'
-    if (p === 'lowest') return 'Trivial'
-
-    return 'Major'
+const DEFAULT_PRIORITY_MAP: Record<string, string> = {
+    'highest': 'Expedite',
+    'critical': 'Expedite',
+    'high': 'Critical',
+    'medium': 'Major',
+    'low': 'Minor',
+    'lowest': 'Trivial'
 }
 
-export function parseSLA(csvContent: string): SLAReport {
+const DEFAULT_ISSUE_TYPES = [
+    { raw: 'Bug', label: '🐞 Bugs' },
+    { raw: '[System] Service request', label: '🤖 System' }
+]
+
+function determineSLATier(priority: string, priorityMap: Record<string, string> = DEFAULT_PRIORITY_MAP): string {
+    const p = priority.toLowerCase()
+    // Check config map first (case insensitive keys if possible, but for now strict)
+    // We try to match lowercase keys
+    for (const [key, tier] of Object.entries(priorityMap)) {
+        if (key.toLowerCase() === p) return tier
+    }
+    return DEFAULT_PRIORITY_MAP[p] || 'Major'
+}
+
+export function parseSLA(csvContent: string, config?: ProjectConfig): SLAReport {
     const lines = csvContent.split('\n')
     const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim())
 
@@ -39,11 +50,18 @@ export function parseSLA(csvContent: string): SLAReport {
     // Stats
     const byPriority: Record<string, { total: number, met: number, missed: number }> = {}
 
+    // Config Resolution
+    const slaConfig = config?.sla || DEFAULT_SLA_CONFIG
+    const priorityMap = config?.priorities || DEFAULT_PRIORITY_MAP
+    const allowedIssueTypes = config?.issueTypes || DEFAULT_ISSUE_TYPES
+
+    const allowedRawTypes = new Set(allowedIssueTypes.map(it => it.raw.toLowerCase()))
+
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i]
         if (!line.trim()) continue
 
-        // Simple CSV split (handling quoted commas would be better but simple logic first)
+        // Simple CSV split
         const cleanCols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
 
         if (cleanCols.length < headers.length) continue;
@@ -55,20 +73,20 @@ export function parseSLA(csvContent: string): SLAReport {
         const summary = cleanCols[colMap.get('Summary')!]
         const issueType = cleanCols[colMap.get('Issue Type')!] || 'Task'
 
-        // Filter: Analyze ONLY Bugs
-        // if (issueType.toLowerCase() !== 'bug') continue
+        // Filter: Check if issueType is in allowed list
+        if (!allowedRawTypes.has(issueType.toLowerCase())) continue
 
         // Determine SLA Tier
-        const slaTier = determineSLATier(priority)
+        const slaTier = determineSLATier(priority, priorityMap)
 
-        // --- Calculate Times by Summing Columns ---
+        // --- Calculate Times ---
 
-        // 1. REACTION TIME: Time spent in Backlog/Open before being picked up
+        // 1. REACTION TIME
         const openTime = parseNumber(cleanCols[colMap.get('Open')!])
         const backlogTime = parseNumber(cleanCols[colMap.get('Backlog')!])
         const reactionMinutes = backlogTime + openTime
 
-        // 2. PAUSE TIME: Time explicitly paused/waiting
+        // 2. PAUSE TIME
         let waitingTime = 0
         const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
         pauseStatuses.forEach(s => {
@@ -77,32 +95,41 @@ export function parseSLA(csvContent: string): SLAReport {
             }
         })
 
-        // 3. RESOLUTION TIME (WORK): Sum of ACTIVE working statuses
-        // User definition: "Presa in carico" (16m) + "In Progress" (165m) = 181m
+        // 3. RESOLUTION TIME
         let workingTime = 0
-        const workStatuses = ['In Progress', 'Presa in carico', 'Developer Testing', 'READY IN HOTFIX']
-
+        const workStatuses = ['In Progress', 'Presa in carico', 'Developer Testing', 'READY IN HOTFIX'] // This could also be configurable later
         workStatuses.forEach(s => {
             if (colMap.has(s)) {
                 workingTime += parseNumber(cleanCols[colMap.get(s)!])
             }
         })
 
-        // NOTE: Previous logic used (Total - Pause). This included 'Done' and 'Released' which are NOT work time.
-        // New logic sums only known work columns.
         const netResolutionMinutes = workingTime
 
         // Targets (Minutes)
-        const targetRes = SLA_CONFIG.RESOLUTION[slaTier] || 2400
-        const targetReact = SLA_CONFIG.REACTION
+        // Targets (Minutes)
+        const config = slaConfig as any
+        const targetRes = (config.resolution ? config.resolution[slaTier] : (config.RESOLUTION ? config.RESOLUTION[slaTier] : 40 * 60))
+
+        // Determine Reaction Target
+        let targetReact = 15 // Default
+        if (config.reactionTime !== undefined) {
+            if (typeof config.reactionTime === 'object') {
+                targetReact = config.reactionTime[slaTier] ?? 15
+            } else {
+                targetReact = config.reactionTime
+            }
+        } else if (config.REACTION !== undefined) {
+            targetReact = config.REACTION
+        }
 
         // Check Compliance
-        const resolutionMet = netResolutionMinutes <= targetRes
-        const reactionMet = reactionMinutes <= targetReact
+        // Use a small epsilon for float comparison safety or ensure proper parsing
+        const resolutionMet = netResolutionMinutes <= (targetRes + 0.001)
+        const reactionMet = reactionMinutes <= (targetReact + 0.001)
 
-        // Determine Resolution Date (Release Date)
+        // Determine Resolution Date
         let resolutionDate: string | undefined = undefined
-        // Priority: Released time > Done time
         if (colMap.has("'->Released")) {
             const val = cleanCols[colMap.get("'->Released")!]
             if (val && val !== '-') resolutionDate = val
@@ -121,10 +148,10 @@ export function parseSLA(csvContent: string): SLAReport {
             slaTier,
             created,
             resolutionDate,
-            reactionTime: parseFloat(reactionMinutes.toFixed(0)), // Minutes
-            resolutionTime: parseFloat(netResolutionMinutes.toFixed(0)), // Minutes
-            timeInPause: parseFloat(waitingTime.toFixed(0)), // Minutes
-            timeInWork: parseFloat(netResolutionMinutes.toFixed(0)), // Minutes - Redundant but kept
+            reactionTime: parseFloat(reactionMinutes.toFixed(2)), // Keep precision
+            resolutionTime: parseFloat(netResolutionMinutes.toFixed(2)), // Keep precision
+            timeInPause: parseFloat(waitingTime.toFixed(2)),
+            timeInWork: parseFloat(netResolutionMinutes.toFixed(2)),
             reactionSLAMet: reactionMet,
             resolutionSLAMet: resolutionMet,
             slaTargetResolution: targetRes,
@@ -155,6 +182,7 @@ export function parseSLA(csvContent: string): SLAReport {
 
 function parseNumber(val: string | undefined): number {
     if (!val || val === '-') return 0
-    // Handle "1,781" -> 1781
-    return parseFloat(val.replace(/,/g, '').replace('"', '').trim())
+    // Handle comma as decimal separator (common in European CSVs)
+    const normalized = val.replace(/"/g, '').trim().replace(/,/g, '.')
+    return parseFloat(normalized) || 0
 }

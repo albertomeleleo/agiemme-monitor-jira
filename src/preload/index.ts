@@ -10,7 +10,8 @@ const api = {
     uploadFile: (projectName: string): Promise<boolean> => ipcRenderer.invoke('upload-file', projectName),
     deleteFile: (projectName: string, filename: string): Promise<boolean> => ipcRenderer.invoke('delete-file', projectName, filename),
     saveFile: (projectName: string, filename: string, content: string): Promise<boolean> => ipcRenderer.invoke('save-file', projectName, filename, content),
-    parseSLA: (content: string): Promise<any> => ipcRenderer.invoke('parse-sla', content),
+    saveProjectConfig: (projectName: string, config: any): Promise<boolean> => ipcRenderer.invoke('save-project-config', projectName, config),
+    parseSLA: (content: string, config?: any): Promise<any> => ipcRenderer.invoke('parse-sla', content, config),
     // Jira
     jiraGetConfig: (): Promise<any> => ipcRenderer.invoke('jira-get-config'),
     jiraSaveConfig: (config: any): Promise<void> => ipcRenderer.invoke('jira-save-config', config),

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { SLAReport } from '../../../shared/sla-types'
+import { Project } from '../../../shared/project-types'
 import { parseDate, formatDuration } from './organisms/SLA/utils'
 import { SLAStatsGrid } from './organisms/SLA/SLAStatsGrid'
 import { SLAFilters } from './organisms/SLA/SLAFilters'
@@ -10,11 +11,17 @@ import { IssueDetailModal } from './organisms/SLA/IssueDetailModal'
 import { Card, Typography } from '@design-system'
 
 interface SLADashboardProps {
-    currentProject: string
+    currentProject: Project
 }
 
 export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element {
-    const SYSTEM_ISSUE_TYPE = '[System] Service request'
+    const DEFAULT_ISSUE_TYPES = [
+        { raw: 'Bug', label: '🐞 Bugs' },
+        { raw: '[System] Service request', label: '🤖 System' }
+    ]
+
+    const issueTypes = currentProject.config?.issueTypes || DEFAULT_ISSUE_TYPES
+
     const [report, setReport] = useState<SLAReport | null>(null)
     const [loading, setLoading] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -26,7 +33,16 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
     const [hoveredIssue, setHoveredIssue] = useState<any | null>(null)
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
     const [activeTab, setActiveTab] = useState<'overview' | 'issues'>('overview')
-    const [selectedIssueType, setSelectedIssueType] = useState<string>('Bug')
+    const [selectedIssueType, setSelectedIssueType] = useState<string>(issueTypes[0]?.raw || 'Bug')
+
+    // Reset selected issue type if it's not valid for current project
+    useEffect(() => {
+        const types = currentProject.config?.issueTypes || DEFAULT_ISSUE_TYPES
+        const currentTypeExists = types.some(t => t.raw === selectedIssueType)
+        if (!currentTypeExists && types.length > 0) {
+            setSelectedIssueType(types[0].raw)
+        }
+    }, [currentProject, selectedIssueType])
 
     // Sticky Header Logic
     const [isSticky, setIsSticky] = useState(false)
@@ -49,7 +65,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         }
     }, [])
 
-    const storageKey = `sla_csv_content_${currentProject}`
+    const storageKey = `sla_csv_content_${currentProject.name}`
 
     // Load persisted data when project changes
     useEffect(() => {
@@ -58,7 +74,8 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         const savedData = localStorage.getItem(storageKey)
         if (savedData) {
             setLoading(true)
-            window.api.parseSLA(savedData)
+            // Pass config to parser
+            window.api.parseSLA(savedData, currentProject.config)
                 .then(result => setReport(result))
                 .catch(err => {
                     console.error('Failed to load persisted data', err)
@@ -76,7 +93,8 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         try {
             const text = await file.text()
             localStorage.setItem(storageKey, text) // Persist per project
-            const result = await window.api.parseSLA(text)
+            // Pass config to parser
+            const result = await window.api.parseSLA(text, currentProject.config)
             setReport(result)
             setSelectedMonth(new Date().toLocaleString('default', { month: 'long', year: 'numeric' }))
         } catch (error) {
@@ -155,8 +173,8 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         // Filter by Status
         if (filterMode === 'failed') return !i.resolutionSLAMet || !i.reactionSLAMet
 
-        if (selectedIssueType === 'Bug' && i.issueType !== 'Bug') return false
-        if (selectedIssueType === SYSTEM_ISSUE_TYPE && i.issueType !== SYSTEM_ISSUE_TYPE) return false
+        // Dynamic Issue Type Filter
+        if (selectedIssueType !== 'All' && i.issueType !== selectedIssueType) return false
 
         return true
     }) || []
@@ -237,6 +255,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 onTabChange={setActiveTab}
                 selectedIssueType={selectedIssueType}
                 onIssueTypeChange={setSelectedIssueType}
+                issueTypes={issueTypes}
                 onReset={handleReset}
             />
 

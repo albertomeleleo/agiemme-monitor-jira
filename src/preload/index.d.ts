@@ -4,12 +4,13 @@ import { ReleaseData } from '../renderer/src/types'
 interface Api {
     getProjects: () => Promise<import('../shared/project-types').Project[]>
     createProject: (name: string) => Promise<boolean>
+    saveProjectConfig: (projectName: string, config: import('../shared/project-types').ProjectConfig) => Promise<boolean>
     getReleases: (projectName: string) => Promise<ReleaseData[]>
     uploadLogo: (projectName: string) => Promise<string | null>
     uploadFile: (projectName: string) => Promise<boolean>
     deleteFile: (projectName: string, filename: string) => Promise<boolean>
     saveFile: (projectName: string, filename: string, content: string) => Promise<boolean>
-    parseSLA: (content: string) => Promise<any>
+    parseSLA: (content: string, config?: any) => Promise<any>
     // Jira
     jiraGetConfig: () => Promise<import('../shared/jira-types').JiraConfig>
     jiraSaveConfig: (config: import('../shared/jira-types').JiraConfig) => Promise<void>

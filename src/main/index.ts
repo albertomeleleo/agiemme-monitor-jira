@@ -63,10 +63,11 @@ app.whenReady().then(() => {
 
                 if (stats.isDirectory()) {
                     let logo: string | undefined = undefined
+                    let config: any | undefined = undefined
                     try {
                         const configPath = join(fullPath, 'project.json')
                         const configContent = await readFile(configPath, 'utf-8')
-                        const config = JSON.parse(configContent)
+                        config = JSON.parse(configContent)
                         if (config.logo) {
                             // Convert logo to base64 or absolute path for renderer
                             // Using protocol or reading file to base64
@@ -83,6 +84,7 @@ app.whenReady().then(() => {
                     projects.push({
                         name: item,
                         logo,
+                        config,
                         lastModified: stats.mtime.toISOString()
                     })
                 }
@@ -99,9 +101,55 @@ app.whenReady().then(() => {
         const projectPath = join(releasesPath, name)
         try {
             await mkdir(projectPath, { recursive: true })
+            // Create default project.json
+            const defaultConfig = {
+                sla: {
+                    REACTION: 15,
+                    RESOLUTION: {
+                        'Expedite': 240,
+                        'Critical': 480,
+                        'Major': 960,
+                        'Minor': 1920,
+                        'Trivial': 2400
+                    }
+                },
+                priorities: {
+                    'highest': 'Expedite',
+                    'critical': 'Expedite',
+                    'high': 'Critical',
+                    'medium': 'Major',
+                    'low': 'Minor',
+                    'lowest': 'Trivial'
+                },
+                issueTypes: [
+                    { raw: 'Bug', label: '🐞 Bugs' },
+                    { raw: '[System] Service request', label: '🤖 System' }
+                ]
+            }
+            await import('fs/promises').then(fs => fs.writeFile(join(projectPath, 'project.json'), JSON.stringify(defaultConfig, null, 2)))
             return true
         } catch (e) {
             console.error(`Failed to create project ${name}`, e)
+            return false
+        }
+    })
+
+    ipcMain.handle('save-project-config', async (_, projectName: string, config: any) => {
+        const releasesPath = getDocumentsPath()
+        const configPath = join(releasesPath, projectName, 'project.json')
+        try {
+            // Read existing to preserve logo path if not passed (though we should pass it)
+            let existing: any = {}
+            try {
+                const content = await readFile(configPath, 'utf-8')
+                existing = JSON.parse(content)
+            } catch (e) { }
+
+            const newConfig = { ...existing, ...config }
+            await import('fs/promises').then(fs => fs.writeFile(configPath, JSON.stringify(newConfig, null, 2)))
+            return true
+        } catch (e) {
+            console.error(`Failed to save config for ${projectName}`, e)
             return false
         }
     })
@@ -216,9 +264,9 @@ app.whenReady().then(() => {
         }
     })
 
-    ipcMain.handle('parse-sla', async (_, content) => {
+    ipcMain.handle('parse-sla', async (_, content, config) => {
         try {
-            return parseSLA(content)
+            return parseSLA(content, config)
         } catch (e) {
             console.error('Error parsing SLA CSV:', e)
             return null
