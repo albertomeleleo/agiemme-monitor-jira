@@ -4,9 +4,10 @@ import { Card, Badge, Typography } from '@design-system'
 interface ReleaseListProps {
     releases: ReleaseData[]
     onSelect: (release: ReleaseData) => void
+    onDelete: (filename: string) => void
 }
 
-export function ReleaseList({ releases, onSelect }: ReleaseListProps): JSX.Element {
+export function ReleaseList({ releases, onSelect, onDelete }: ReleaseListProps): JSX.Element {
     return (
         <div className="space-y-3">
             {releases.map(release => (
@@ -39,6 +40,16 @@ export function ReleaseList({ releases, onSelect }: ReleaseListProps): JSX.Eleme
                                 <Badge variant="evolutive" label={`${release.evolutiveCount}`} />
                                 {release.isRegression && <Badge variant="regression" label="REGRESSION" />}
                             </div>
+                            <button
+                                className="p-2 text-brand-text-sec hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onDelete(release.filename)
+                                }}
+                                title="Delete Release"
+                            >
+                                🗑️
+                            </button>
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <span className="text-brand-cyan text-sm font-bold">View ›</span>
                             </div>

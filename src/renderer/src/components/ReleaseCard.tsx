@@ -4,11 +4,22 @@ import { Card, Badge, Button, Typography } from '@design-system'
 interface ReleaseCardProps {
     release: ReleaseData
     onClick: () => void
+    onDelete: (filename: string) => void
 }
 
-export function ReleaseCard({ release, onClick }: ReleaseCardProps): JSX.Element {
+export function ReleaseCard({ release, onClick, onDelete }: ReleaseCardProps): JSX.Element {
     return (
         <Card variant="glass" hoverable className="flex flex-col group relative overflow-hidden h-full" onClick={onClick}>
+            <button
+                className="absolute top-2 right-2 p-2 z-20 text-brand-text-sec hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(release.filename)
+                }}
+                title="Delete Release"
+            >
+                🗑️
+            </button>
             {release.isRegression && (
                 <div className="absolute top-0 right-0 p-2 bg-red-500/20 rounded-bl-xl border-l border-b border-red-500/30 z-10">
                     <Typography variant="mono" className="text-red-400 font-bold uppercase text-[10px] drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">Regression</Typography>

@@ -63,11 +63,96 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
                 </div>
 
                 <div className="space-y-8">
+                    {/* Tiers Management */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <Typography variant="h4" className="text-brand-cyan">Priority Tiers</Typography>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                    const newTier = `Tier ${config.tiers ? config.tiers.length + 1 : 1}`
+                                    setConfig({
+                                        ...config,
+                                        tiers: [...(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']), newTier]
+                                    })
+                                }}
+                            >
+                                + Add Tier
+                            </Button>
+                        </div>
+                        <Typography variant="body" className="text-gray-400 text-sm">Define the priority levels for this project. These will be used for SLA targets.</Typography>
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']).map((tier, idx) => (
+                                <div key={idx} className="flex items-center gap-2 bg-brand-deep/30 p-2 rounded border border-white/5">
+                                    <Input
+                                        value={tier}
+                                        onChange={(e) => {
+                                            const newName = e.target.value
+                                            const currentTiers = [...(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial'])]
+
+                                            // Rename keys in existing config to preserve data
+                                            const oldName = currentTiers[idx]
+                                            currentTiers[idx] = newName
+
+                                            // Copy SLA values to new key
+                                            const newResolution = { ...config.sla.resolution }
+                                            if (newResolution[oldName] !== undefined) {
+                                                newResolution[newName] = newResolution[oldName]
+                                                delete newResolution[oldName]
+                                            }
+
+                                            const newReaction = typeof config.sla.reactionTime === 'object' ? { ...config.sla.reactionTime } : {}
+                                            if (newReaction[oldName] !== undefined) {
+                                                newReaction[newName] = newReaction[oldName]
+                                                delete newReaction[oldName]
+                                            }
+
+                                            // Update mapped priorities
+                                            const newPriorities = { ...config.priorities }
+                                            Object.keys(newPriorities).forEach(k => {
+                                                if (newPriorities[k] === oldName) newPriorities[k] = newName
+                                            })
+
+                                            setConfig({
+                                                ...config,
+                                                tiers: currentTiers,
+                                                sla: {
+                                                    ...config.sla,
+                                                    resolution: newResolution,
+                                                    reactionTime: typeof config.sla.reactionTime === 'object' ? newReaction : config.sla.reactionTime
+                                                },
+                                                priorities: newPriorities
+                                            })
+                                        }}
+                                        className="h-8 text-sm w-full"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            const currentTiers = [...(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial'])]
+                                            const tierToRemove = currentTiers[idx]
+                                            const newTiers = currentTiers.filter((_, i) => i !== idx)
+
+                                            // Cleanup config for removed tier... or leave it? Safer to leave data or clean? 
+                                            // Let's implicit clean by UI hiding, explicit clean not strictly required but good.
+
+                                            setConfig({ ...config, tiers: newTiers })
+                                        }}
+                                        className="text-red-400 hover:text-red-300 px-2"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* SLA Section */}
                     <div className="space-y-4">
                         <Typography variant="h4" className="text-brand-cyan">SLA Targets (HH:MM)</Typography>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {['Expedite', 'Critical', 'Major', 'Minor', 'Trivial'].map(tier => (
+                            {(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']).map(tier => (
                                 <div key={tier} className="bg-brand-deep/30 p-3 rounded border border-white/5 space-y-3">
                                     <div className="font-bold text-white mb-2 pb-1 border-b border-white/5">{tier}</div>
 
@@ -146,7 +231,8 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
                                         }}
                                         className="bg-brand-deep border border-white/10 rounded px-2 py-1 text-white text-sm focus:border-brand-cyan outline-none"
                                     >
-                                        {['Expedite', 'Critical', 'Major', 'Minor', 'Trivial'].map(t => (
+                                        <option value="">Select Tier</option>
+                                        {(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']).map(t => (
                                             <option key={t} value={t}>{t}</option>
                                         ))}
                                     </select>

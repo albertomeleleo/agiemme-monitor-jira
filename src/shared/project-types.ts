@@ -11,6 +11,7 @@ export interface ProjectConfig {
         reactionTime: number | Record<string, number>; // Minutes (number for legacy, Record for granular)
         resolution: Record<string, number>; // Tier -> Hours
     };
+    tiers?: string[]; // Ordered list of enabled tiers (e.g. ['P1', 'P2']). If missing, use defaults.
     priorities: Record<string, string>; // Jira Priority -> SLA Tier
     issueTypes: {
         raw: string; // The string in CSV (e.g. "[System] Service request")

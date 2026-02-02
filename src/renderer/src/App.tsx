@@ -224,6 +224,7 @@ function App(): JSX.Element {
                                         <ReleaseTimelineChart releases={releases} />
                                     </div>
 
+
                                     {/* FILTERS & CONTROLS */}
                                     <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
                                         <div className="relative flex-1">
@@ -275,6 +276,7 @@ function App(): JSX.Element {
                                         </div>
                                     </div>
 
+
                                     {/* RELEASE LIST */}
                                     {loading ? (
                                         <div className="text-center py-20">
@@ -295,6 +297,7 @@ function App(): JSX.Element {
                                                             key={release.version}
                                                             release={release}
                                                             onClick={() => setSelectedRelease(release)}
+                                                            onDelete={handleDeleteRelease}
                                                         />
                                                     ))}
                                                 </div>
@@ -302,6 +305,7 @@ function App(): JSX.Element {
                                                 <ReleaseList
                                                     releases={processedReleases}
                                                     onSelect={setSelectedRelease}
+                                                    onDelete={handleDeleteRelease}
                                                 />
                                             )}
                                         </div>
@@ -326,25 +330,29 @@ function App(): JSX.Element {
                     )}
 
                 </div>
-            </div>
+            </div >
 
             {/* MODALS */}
-            {selectedRelease && (
-                <ReleaseDetail
-                    release={selectedRelease}
-                    onClose={() => setSelectedRelease(null)}
-                />
-            )}
+            {
+                selectedRelease && (
+                    <ReleaseDetail
+                        release={selectedRelease}
+                        onClose={() => setSelectedRelease(null)}
+                    />
+                )
+            }
 
-            {currentProject && (
-                <ProjectSettingsModal
-                    project={currentProject}
-                    isOpen={isSettingsOpen}
-                    onClose={() => setIsSettingsOpen(false)}
-                    onSave={refreshProjects}
-                />
-            )}
-        </div>
+            {
+                currentProject && (
+                    <ProjectSettingsModal
+                        project={currentProject}
+                        isOpen={isSettingsOpen}
+                        onClose={() => setIsSettingsOpen(false)}
+                        onSave={refreshProjects}
+                    />
+                )
+            }
+        </div >
     )
 }
 
