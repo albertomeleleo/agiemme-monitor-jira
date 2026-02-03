@@ -22,6 +22,16 @@ export interface SLAIssue {
 
     slaTargetResolution: number; // Hours
     slaTargetReaction: number; // Hours (0.25 = 15m)
+
+    changelog?: Array<{
+        author: string;
+        created: string;
+        items: Array<{
+            field: string;
+            fromString: string | null;
+            toString: string | null;
+        }>;
+    }>;
 }
 
 export interface SLAReport {

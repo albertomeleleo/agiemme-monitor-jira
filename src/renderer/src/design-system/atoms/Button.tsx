@@ -32,7 +32,7 @@ export function Button({
         primary: "bg-brand-cyan text-brand-deep shadow-[0_0_10px_rgba(0,242,255,0.3)] hover:shadow-[0_0_20px_rgba(0,242,255,0.6)] hover:brightness-110 border border-transparent",
         secondary: "bg-brand-deep/50 text-brand-cyan border border-brand-cyan/50 hover:bg-brand-cyan/10 hover:border-brand-cyan shadow-[0_0_5px_rgba(0,242,255,0.1)]",
         ghost: "bg-transparent text-brand-text-sec hover:text-white hover:bg-white/5 border border-transparent",
-        danger: "bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.3)] hover:bg-red-500 hover:shadow-[0_0_20px_rgba(239,68,68,0.5)]",
+        danger: "bg-red-600 text-white]",
         icon: "p-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 rounded-full aspect-square"
     }
 

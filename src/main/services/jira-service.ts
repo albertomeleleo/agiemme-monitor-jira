@@ -163,34 +163,47 @@ export class JiraService {
         // JQL to find issues in the version
         const jql = `project = "${projectKey}" AND fixVersion = ${versionId}`
 
-        // Use POST search for better stability
-        // Use POST search for better stability
-        // NOTE: The standard search endpoint is deprecated for JQL POST requests.
-        // We must use /rest/api/3/search/jql
         const url = `${this.getBaseUrl(config.host)}/rest/api/3/search/jql`
-        console.error('Fetching issues (POST) from:', url)
-        console.error('JQL:', jql)
+        console.log('Fetching issues (POST) from:', url)
+        console.log('JQL:', jql)
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: this.getHeaders(config.email, config.apiToken),
-            body: JSON.stringify({
+        let allIssues: JiraIssue[] = []
+        let nextPageToken: string | undefined = undefined
+
+        do {
+            const body: any = {
                 jql,
                 maxResults: 1000,
                 fields: ['summary', 'status', 'issuetype', 'created', 'priority']
-                // Removing validateQuery as it might cause issues with the new endpoint
+            }
+
+            if (nextPageToken) {
+                body.nextPageToken = nextPageToken
+            }
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: this.getHeaders(config.email, config.apiToken),
+                body: JSON.stringify(body)
             })
-        })
 
-        if (!response.ok) {
-            const body = await response.text()
-            console.error(`Jira API Error: ${response.status} ${response.statusText}`)
-            console.error('Response Body:', body)
-            throw new Error(`Failed to fetch issues: ${response.statusText} (${response.status}) - ${body}`)
-        }
+            if (!response.ok) {
+                const errorBody = await response.text()
+                console.error(`Jira API Error: ${response.status} ${response.statusText}`)
+                console.error('Response Body:', errorBody)
+                throw new Error(`Failed to fetch issues: ${response.statusText} (${response.status}) - ${errorBody}`)
+            }
 
-        const data = await response.json()
-        return data.issues as JiraIssue[]
+            const data = await response.json()
+            const issues = data.issues as JiraIssue[]
+            allIssues = allIssues.concat(issues)
+
+            nextPageToken = data.nextPageToken
+            console.log(`Fetched ${issues.length} issues. Next Page Token: ${nextPageToken ? 'Yes' : 'No'}`)
+
+        } while (nextPageToken)
+
+        return allIssues
     }
 }
 

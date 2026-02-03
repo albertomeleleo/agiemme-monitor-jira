@@ -76,7 +76,7 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
                         <Card variant="glass" className={`!p-4 ${release.isRegression ? 'bg-red-900/20 border-red-900/50' : 'bg-brand-card/30'}`}>
                             <Typography variant="caption" className="uppercase font-bold tracking-wider">Status</Typography>
                             <div className="text-3xl font-bold text-white mt-1">
-                                {release.isRegression ? <span className="text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">Regression</span> : <span className="text-green-400">Stable</span>}
+                                {release.isRegression ? <span className="text-red-400 ]">Regression</span> : <span className="text-green-400">Stable</span>}
                             </div>
                         </Card>
                     </div>
@@ -86,7 +86,7 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
                         {/* Bugfixes */}
                         <div className="space-y-4">
                             <Typography variant="h3" className="border-b border-white/10 pb-2 flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" /> Bugfixes
+                                <span className="w-2 h-2 rounded-full bg-red-500" /> Bugfixes
                             </Typography>
                             {bugfixes.length > 0 ? (
                                 <div className="space-y-3">

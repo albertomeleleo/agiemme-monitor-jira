@@ -301,7 +301,16 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
             reactionSLAMet: reactionMet,
             resolutionSLAMet: resolutionMet,
             slaTargetResolution: targetRes,
-            slaTargetReaction: targetReact
+            slaTargetReaction: targetReact,
+            changelog: history.map((h: any) => ({
+                author: h.author?.displayName || 'Unknown',
+                created: h.created,
+                items: h.items.map((i: any) => ({
+                    field: i.field,
+                    fromString: i.fromString || '',
+                    toString: i.toString || ''
+                }))
+            }))
         })
 
         // Aggregation

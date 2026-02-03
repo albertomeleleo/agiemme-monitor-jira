@@ -11,7 +11,7 @@ export function Badge({ variant, label, children, className = '' }: BadgeProps):
     const variants = {
         bugfix: "bg-red-900/30 text-red-300 border-red-900/50",
         evolutive: "bg-brand-cyan/20 text-brand-cyan border-brand-cyan/30 shadow-[0_0_5px_rgba(0,242,255,0.2)]",
-        regression: "bg-red-500 text-white animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]",
+        regression: "bg-red-500 text-white",
         success: "bg-green-500/20 text-green-400 border-green-500/30",
         warning: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
         neutral: "bg-gray-700/50 text-gray-300 border-gray-600/50"

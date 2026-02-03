@@ -256,7 +256,7 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <Card variant="glass" className="bg-brand-deep/50 text-center !p-4">
-                                <div className="text-2xl font-bold text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">{issues.filter(i => i.fields.issuetype.name === 'Bug').length}</div>
+                                <div className="text-2xl font-bold text-red-500 ">{issues.filter(i => i.fields.issuetype.name === 'Bug').length}</div>
                                 <Typography variant="caption" className="uppercase">Bugs Found</Typography>
                             </Card>
                             <Card variant="glass" className="bg-brand-deep/50 text-center !p-4">
