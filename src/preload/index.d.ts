@@ -22,6 +22,7 @@ interface Api {
     jiraParseApiIssues: (issues: any[], config?: any) => Promise<any>
     // Issues
     issuesGetDB: (projectName: string) => Promise<any>
+    issuesSaveDB: (projectName: string, db: any) => Promise<boolean>
     issuesSync: (projectName: string, jql?: string) => Promise<any>
 }
 

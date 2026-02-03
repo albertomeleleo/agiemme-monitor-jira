@@ -12,6 +12,7 @@ interface JiraImportModalProps {
 export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImportModalProps): JSX.Element {
     const [step, setStep] = useState<1 | 2 | 3>(1)
     const [config, setConfig] = useState<JiraConfig>({ host: '', email: '', apiToken: '' })
+    const [showToken, setShowToken] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -177,13 +178,23 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                         </div>
                         <div>
                             <Typography variant="caption" className="block mb-1 font-bold uppercase">API Token</Typography>
-                            <Input
-                                fullWidth
-                                type="password"
-                                placeholder="••••••••••••••••"
-                                value={config.apiToken}
-                                onChange={e => setConfig(prev => ({ ...prev, apiToken: e.target.value }))}
-                            />
+                            <div className="relative">
+                                <Input
+                                    fullWidth
+                                    type={showToken ? 'text' : 'password'}
+                                    placeholder="••••••••••••••••"
+                                    value={config.apiToken}
+                                    onChange={e => setConfig(prev => ({ ...prev, apiToken: e.target.value }))}
+                                    className="pr-12"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowToken(!showToken)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                                >
+                                    {showToken ? 'Hide' : 'Show'}
+                                </button>
+                            </div>
                             <Typography variant="mono" className="mt-1 text-gray-500">
                                 Create one at <a href="#" className="underline hover:text-brand-cyan" onClick={() => window.open('https://id.atlassian.com/manage-profile/security/api-tokens')}>Atlassian Security</a>
                             </Typography>

@@ -8,7 +8,7 @@ export async function scanReleases(releasesPath: string): Promise<ReleaseData[]>
     const validFiles = files.filter((file) => {
         const lower = file.toLowerCase()
         // Exclude system files
-        if (lower === 'project.json' || lower.startsWith('logo.')) return false
+        if (lower === 'project.json' || lower === "issues.json" || lower.startsWith('logo.')) return false
         return lower.endsWith('.pdf') || lower.endsWith('.json')
     })
 

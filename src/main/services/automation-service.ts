@@ -20,6 +20,18 @@ class NotificationService {
             return false
         }
     }
+    async sendTelegram(token: string, chatId: string, message: string): Promise<boolean> {
+        try {
+            const encodedMsg = encodeURIComponent(message)
+            const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodedMsg}`
+            console.log('Sending Telegram:', url.replace(token, '***'))
+            const res = await fetch(url)
+            return res.ok
+        } catch (e) {
+            console.error('Failed to send Telegram', e)
+            return false
+        }
+    }
 }
 
 class AutomationService {
@@ -51,13 +63,24 @@ class AutomationService {
 
         const db = await issuesDB.getDB(projectName)
 
-        // Requirements: JQL, PollInterval, WhatsApp Config, TargetStatus
-        if (!db.jql || !db.pollInterval || !db.whatsappApiKey || !db.whatsappPhone || !db.targetStatus) {
-            console.log(`Skipping automation for ${projectName}: Missing config`)
+        // Requirements: JQL, PollInterval, TargetStatus
+        if (!db.jql || !db.pollInterval || (!db.targetStatus && (!db.targetPriorities || db.targetPriorities.length === 0))) {
+            console.log(`Skipping automation for ${projectName}: Missing basic config (Needs status or priorities)`)
             return
         }
 
-        console.log(`Starting scheduler for ${projectName} every ${db.pollInterval} min`)
+        // Check Notification config
+        const provider = db.notificationProvider || 'whatsapp'
+        let hasConfig = false
+        if (provider === 'whatsapp' && db.whatsappPhone && db.whatsappApiKey) hasConfig = true
+        if (provider === 'telegram' && db.telegramBotToken && db.telegramChatId) hasConfig = true
+
+        if (!hasConfig) {
+            console.log(`Skipping automation for ${projectName}: Missing notification config for ${provider}`)
+            return
+        }
+
+        console.log(`Starting scheduler for ${projectName} every ${db.pollInterval} min (${provider})`)
 
         // Initial run? Maybe not, could spam on startup. Let's just set interval.
         const intervalMs = db.pollInterval * 60 * 1000
@@ -82,13 +105,26 @@ class AutomationService {
             for (const issue of newIssues) {
                 const old = oldIssuesMap.get(issue.key)
                 const currentStatus = issue.fields.status.name
+                const currentPriority = issue.fields.priority?.name || 'Medium'
 
-                if (old) {
-                    // Check if status changed TO target
-                    if (old.status !== currentStatus &&
-                        currentStatus.toLowerCase() === db.targetStatus!.toLowerCase()) {
+                if (!old) {
+                    // NEW ISSUE
+                    if (db.targetPriorities && db.targetPriorities.length > 0) {
+                        // Check if priority matches (case insensitive)
+                        const matchesPriority = db.targetPriorities.some(p => p.toLowerCase() === currentPriority.toLowerCase())
 
-                        updatesToNotify.push(`${issue.key}: ${currentStatus} (was ${old.status})`)
+                        if (matchesPriority) {
+                            updatesToNotify.push(`🆕 NEW: ${issue.key} [${currentPriority}] - ${issue.fields.summary}`)
+                        }
+                    }
+                } else {
+                    // EXISTING ISSUE - Check status change
+                    if (db.targetStatus) {
+                        if (old.status !== currentStatus &&
+                            currentStatus.toLowerCase() === db.targetStatus.toLowerCase()) {
+
+                            updatesToNotify.push(`🔄 ${issue.key}: ${currentStatus} (was ${old.status})`)
+                        }
                     }
                 }
             }
@@ -99,7 +135,13 @@ class AutomationService {
             if (updatesToNotify.length > 0) {
                 console.log(`Found ${updatesToNotify.length} updates for ${projectName}`)
                 const msg = `🚀 ReleaseAnalyzer: ${projectName}\n${updatesToNotify.join('\n')}`
-                await this.notificationService.sendWhatsApp(db.whatsappPhone!, db.whatsappApiKey!, msg)
+
+                const provider = db.notificationProvider || 'whatsapp'
+                if (provider === 'telegram' && db.telegramBotToken && db.telegramChatId) {
+                    await this.notificationService.sendTelegram(db.telegramBotToken, db.telegramChatId, msg)
+                } else if (provider === 'whatsapp' && db.whatsappPhone && db.whatsappApiKey) {
+                    await this.notificationService.sendWhatsApp(db.whatsappPhone, db.whatsappApiKey, msg)
+                }
             } else {
                 console.log('No status changes matching target.')
             }

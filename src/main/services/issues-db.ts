@@ -17,6 +17,17 @@ export interface IssueDatabase {
     jql: string
     issues: MonitoredIssue[]
     lastSync: number
+
+    // Automation
+    pollInterval?: number
+    targetStatus?: string
+
+    // Notifications
+    notificationProvider?: 'whatsapp' | 'telegram'
+    whatsappPhone?: string
+    whatsappApiKey?: string
+    telegramBotToken?: string
+    telegramChatId?: string
 }
 
 class IssuesDB {

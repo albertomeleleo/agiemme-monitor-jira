@@ -23,6 +23,7 @@ const api = {
     jiraParseApiIssues: (issues: any[], config?: any): Promise<any> => ipcRenderer.invoke('jira-parse-api-issues', issues, config),
     // Issues
     issuesGetDB: (projectName: string): Promise<any> => ipcRenderer.invoke('issues-get-db', projectName),
+    issuesSaveDB: (projectName: string, db: any): Promise<any> => ipcRenderer.invoke('issues-save-db', projectName, db),
     issuesSync: (projectName: string, jql?: string): Promise<any> => ipcRenderer.invoke('issues-sync', projectName, jql)
 }
 

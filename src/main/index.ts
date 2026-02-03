@@ -292,8 +292,15 @@ app.whenReady().then(() => {
     // Issues Persistence
     ipcMain.handle('issues-get-db', (_, projectName) => issuesDB.getDB(projectName))
     ipcMain.handle('issues-save-db', async (_, projectName, db) => {
-        await issuesDB.saveDB(projectName, db)
-        automationService.startProject(projectName)
+        try {
+            await issuesDB.saveDB(projectName, db)
+            console.log(`[IPC] Saved DB for ${projectName}, restarting automation...`)
+            await automationService.startProject(projectName)
+            return true
+        } catch (e: any) {
+            console.error(`[IPC] Failed to save DB or restart automation for ${projectName}:`, e)
+            throw new Error(`Save failed: ${e.message}`)
+        }
     })
     ipcMain.handle('issues-sync', async (_, projectName, jql) => {
         // Orchestrator: Fetch from Jira -> Update DB
