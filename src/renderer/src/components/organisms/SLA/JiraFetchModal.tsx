@@ -43,6 +43,13 @@ export function JiraFetchModal({ onClose, onFetch }: JiraFetchModalProps): JSX.E
         try {
             const pros = await window.api.jiraGetProjects()
             setProjects(pros)
+
+            // Restore last selected project
+            const savedProject = localStorage.getItem('sla_last_project')
+            if (savedProject && pros.some(p => p.key === savedProject)) {
+                setSelectedProject(savedProject)
+                setJql(`project = "${savedProject}" AND created >= -30d ORDER BY created DESC`)
+            }
         } catch (e) {
             console.error('Failed to fetch projects', e)
         }
@@ -56,7 +63,8 @@ export function JiraFetchModal({ onClose, onFetch }: JiraFetchModalProps): JSX.E
             const success = await window.api.jiraTestConnection(config)
             if (success) {
                 setConnected(true)
-                fetchProjects() // Fetch projects after connect
+                // fetchProjects() will be called here, which now handles restoration
+                fetchProjects()
             } else {
                 setError('Connection failed. Check credentials.')
             }
@@ -70,8 +78,10 @@ export function JiraFetchModal({ onClose, onFetch }: JiraFetchModalProps): JSX.E
     const handleProjectChange = (key: string) => {
         setSelectedProject(key)
         if (key) {
+            localStorage.setItem('sla_last_project', key)
             setJql(`project = "${key}" AND created >= -30d ORDER BY created DESC`)
         } else {
+            localStorage.removeItem('sla_last_project')
             setJql('created >= -30d ORDER BY created DESC') // Reset to default if no project selected
         }
     }
