@@ -106,54 +106,79 @@ export class JiraService {
         // Construct base URL - prioritizing standard search endpoint but parameters conform to user request
         const baseUrl = `${this.getBaseUrl(config.host)}/rest/api/3/search/jql`
 
-        const params = new URLSearchParams()
-        params.append('jql', jql)
-        params.append('startAt', '0')
+        let allIssues: any[] = []
+        let nextPageToken: string | undefined = undefined
+        let isLast = false
 
-        params.append('maxResults', (options.maxResults || 1000).toString())
+        // Base Params
+        const baseParams = new URLSearchParams()
+        baseParams.append('jql', jql)
+
+        // Page size (maxResults per call)
+        baseParams.append('maxResults', (options.maxResults || 1000).toString())
 
         if (options.fields) {
             const fieldsString = Array.isArray(options.fields)
                 ? options.fields.join(',')
                 : options.fields
-            params.append('fields', fieldsString)
+            baseParams.append('fields', fieldsString)
         }
 
         if (options.expand) {
             const expandString = Array.isArray(options.expand)
                 ? options.expand.join(',')
                 : options.expand
-            params.append('expand', expandString)
+            baseParams.append('expand', expandString)
         }
 
-        if (options.nextPageToken) {
-            params.append('nextPageToken', options.nextPageToken)
+        // Loop for Pagination
+        do {
+            const params = new URLSearchParams(baseParams)
+
+            if (nextPageToken) {
+                params.append('nextPageToken', nextPageToken)
+            } else {
+                // For first call, maybe startAt 0 is good practice if API requires it, 
+                // though api/3/search/jql usually defaults to 0.
+                // params.append('startAt', '0') 
+            }
+
+            const url = `${baseUrl}?${params.toString()}`
+
+            // LOGGING
+            console.log(`[JiraService] Fetching page... Token present: ${!!nextPageToken}`)
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: this.getHeaders(config.email, config.apiToken)
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(`JIRA Search API error (${response.status}): ${errorText}`)
+            }
+
+            const data = await response.json()
+
+            if (data.issues) {
+                allIssues = allIssues.concat(data.issues)
+            }
+
+            // Pagination Logic
+            nextPageToken = data.nextPageToken
+            isLast = data.isLast
+
+            // Safety: if no token, we must stop even if isLast is somehow false (avoid infinite loop)
+            if (!nextPageToken) break
+
+        } while (isLast === false)
+
+        console.log(`[JiraService] Usage: searchIssues finished. Total issues: ${allIssues.length}`)
+
+        return {
+            issues: allIssues,
+            total: allIssues.length
         }
-
-        const url = `${baseUrl}?${params.toString()}`
-
-        // LOGGING
-        console.log('Inizio chiamata FETCH (GET)...')
-        console.log('URL completo:', url)
-        // Convert Params to object for logging
-        const paramsObj: Record<string, string> = {}
-        for (const [key, value] of params.entries()) {
-            paramsObj[key] = value
-        }
-        console.log('Query params:', paramsObj)
-
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: this.getHeaders(config.email, config.apiToken)
-        })
-
-        if (!response.ok) {
-            const errorText = await response.text()
-            throw new Error(`JIRA Search API error (${response.status}): ${errorText}`)
-        }
-
-        const data = await response.json()
-        return data
     }
 
     async getReleaseIssues(projectKey: string, versionId: string): Promise<JiraIssue[]> {
