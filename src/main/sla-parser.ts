@@ -223,53 +223,152 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         // Sort history by created asc
         history.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime())
 
-        const transitions: { time: number, status: string }[] = []
-        transitions.push({ time: new Date(created).getTime(), status: 'Open' }) // Default start
+        // 1. Build Transition Timeline
+        const transitions: { time: number, status: string, originalStatus: string }[] = []
+        // Initial state
+        transitions.push({ time: new Date(created).getTime(), status: 'Open', originalStatus: 'Open' })
+
+        // Specific Anchors requested by user
+        let tCreation: number | null = null
+        let tInProgress: number | null = null
+        let tDone: number | null = null
 
         for (const h of history) {
             const item = h.items.find((i: any) => i.field === 'status')
             if (item) {
+                const ts = new Date(h.created).getTime()
+                const from = item.fromString || ''
+                const to = item.toString || ''
+
+                // Track Transitions
                 transitions.push({
-                    time: new Date(h.created).getTime(),
-                    status: item.toString
+                    time: ts,
+                    status: to,
+                    originalStatus: from
                 })
+
+                // Detect Anchors
+                // "utilizza come data di creazione... Backlog -> Presa in carico"
+                if (!tCreation && from === 'Backlog' && to === 'Presa in carico') {
+                    tCreation = ts
+                }
+
+                // "utilizza come data di presa in carico... Presa in carico -> In Progress"
+                // This seems to define the end of Reaction / Start of Work
+                if (!tInProgress && from === 'Presa in carico' && to === 'In Progress') {
+                    tInProgress = ts
+                }
+
+                // "utilizza come data di chiusura... -> Done"
+                if (to === 'Done') {
+                    tDone = ts // Use latest Done? Or first? Usually Resolution is final, so latest is safer if reopened.
+                }
             }
         }
 
-        let endTime = Date.now()
-        if (fields.resolutiondate) {
-            endTime = new Date(fields.resolutiondate).getTime()
+        // Apply Logic if Anchors exist
+        let calculatedReaction = 0
+        let calculatedResolution = 0
+        let calculatedPause = 0
+
+        // --- Reaction Time ---
+        // Definition: Time between "Creation" (Backlog->Presa in carico) and "Presa in carico" (Presa in carico->In Progress)
+        if (tCreation && tInProgress) {
+            calculatedReaction = (tInProgress - tCreation) / (1000 * 60)
+            reactionMinutes = calculatedReaction
+        } else {
+            // Fallback to standard status-based approach if specific transitions missing
+            // (e.g. if issue went straight to In Progress)
+            // Re-calculate using status durations as fallback
+            let tempReaction = 0
+            const reactionStatuses = ['Open', 'To Do', 'Backlog', 'New']
+            for (let i = 0; i < transitions.length - 1; i++) {
+                const start = transitions[i]
+                const end = transitions[i + 1]
+                if (reactionStatuses.includes(start.status)) {
+                    tempReaction += (end.time - start.time) / (1000 * 60)
+                }
+            }
+            // Only use fallback if Anchors were missing. 
+            // If tCreation exists but tInProgress doesn't, we can't calculate per user rule.
+            // But let's keep the value 0 if not met? Or fallback?
+            // "Utilizza il valore..." implies strictness.
+            // If the transition didn't happen, maybe Reaction is not met or calc is 0.
+            // Let's fallback for robustness.
+            if (tCreation && !tInProgress) {
+                // Started reaction but not finished? Open ended?
+                const now = Date.now()
+                reactionMinutes = (now - tCreation) / (1000 * 60)
+            } else if (!tCreation) {
+                // Use generic
+                reactionMinutes = tempReaction
+            }
         }
 
-        const statusDurations: Record<string, number> = {}
+        // --- Resolution Time ---
+        // Definition: Time between "In Progress" anchor and "Done" anchor
+        if (tInProgress) {
+            const endWork = tDone || Date.now()
 
-        // Calculate durations
-        for (let i = 0; i < transitions.length; i++) {
-            const start = transitions[i]
-            const end = (i < transitions.length - 1) ? transitions[i + 1].time : endTime
-            const durationMins = (end - start.time) / (1000 * 60)
+            // Calculate total duration
+            // But need to subtract Pauses that happened within this interval
 
-            const s = start.status
-            statusDurations[s] = (statusDurations[s] || 0) + durationMins
-        }
+            // Iterate transitions that happened AFTER tInProgress and BEFORE endWork
+            // Actually, easier to iterate all intervals and check overlap with [tInProgress, endWork]
 
-        // Map Statuses to Categories (Reaction vs Resolution vs Pause)
-        // These hardcoded lists should ideally be in config too
-        const reactionStatuses = ['Open', 'To Do', 'Backlog', 'New'] // Statuses before "In Progress"
-        const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
-        const workStatuses = ['In Progress', 'Presa in carico', 'Developer Testing', 'READY IN HOTFIX']
+            let totalWorkDuration = 0
+            let totalPauseDuration = 0
 
-        // Sum up
-        for (const [s, dur] of Object.entries(statusDurations)) {
-            if (reactionStatuses.some(rs => rs.toLowerCase() === s.toLowerCase())) {
-                reactionMinutes += dur
+            const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
+
+            for (let i = 0; i < transitions.length; i++) {
+                const tran = transitions[i]
+                const nextTranTime = (i < transitions.length - 1) ? transitions[i + 1].time : Date.now()
+
+                // Interval [tran.time, nextTranTime]
+                // Intersect with [tInProgress, endWork]
+                const start = Math.max(tran.time, tInProgress)
+                const end = Math.min(nextTranTime, endWork)
+
+                if (end > start) {
+                    const duration = (end - start) / (1000 * 60)
+                    if (pauseStatuses.some(ps => ps.toLowerCase() === tran.status.toLowerCase())) {
+                        totalPauseDuration += duration
+                    } else {
+                        // Assume everything else is work? Or just strictly non-pause?
+                        // Resolution Time usually includes Work + Pause - Pause = Work.
+                        // So effectively Resolution Time = (endWork - tInProgress) - Pauses.
+                    }
+                }
             }
-            if (pauseStatuses.some(ps => ps.toLowerCase() === s.toLowerCase())) {
-                waitingTime += dur
+
+            const grossDuration = (endWork - tInProgress) / (1000 * 60)
+            calculatedResolution = grossDuration - totalPauseDuration
+            calculatedPause = totalPauseDuration
+
+            workingTime = calculatedResolution
+            waitingTime = calculatedPause
+
+        } else {
+            // Fallback
+            // ... (generic calculation logic would go here if needed, but let's stick to the requested mainly)
+            // Standard calc:
+            const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
+            const workStatuses = ['In Progress', 'Presa in carico', 'Developer Testing', 'READY IN HOTFIX']
+
+            let tempWork = 0
+            let tempPause = 0
+
+            for (let i = 0; i < transitions.length; i++) {
+                const start = transitions[i]
+                const end = (i < transitions.length - 1) ? transitions[i + 1].time : Date.now()
+                const dur = (end - start.time) / (1000 * 60)
+
+                if (workStatuses.some(s => s.toLowerCase() === start.status.toLowerCase())) tempWork += dur
+                if (pauseStatuses.some(s => s.toLowerCase() === start.status.toLowerCase())) tempPause += dur
             }
-            if (workStatuses.some(ws => ws.toLowerCase() === s.toLowerCase())) {
-                workingTime += dur
-            }
+            workingTime = tempWork
+            waitingTime = tempPause
         }
 
         // Targets
@@ -285,6 +384,9 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         const resolutionMet = workingTime <= (targetRes + 0.001)
         const reactionMet = reactionMinutes <= (targetReact + 0.001)
 
+        // Update Effective Creation Date if mapped
+        const effectiveCreated = tCreation ? new Date(tCreation).toISOString() : created
+
         parsedIssues.push({
             key,
             summary,
@@ -292,8 +394,8 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
             priority,
             issueType,
             slaTier,
-            created,
-            resolutionDate: fields.resolutiondate || undefined,
+            created: effectiveCreated, // Override with custom creation date
+            resolutionDate: tDone ? new Date(tDone).toISOString() : (fields.resolutiondate || undefined),
             reactionTime: parseFloat(reactionMinutes.toFixed(2)),
             resolutionTime: parseFloat(workingTime.toFixed(2)),
             timeInPause: parseFloat(waitingTime.toFixed(2)),
@@ -302,6 +404,7 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
             resolutionSLAMet: resolutionMet,
             slaTargetResolution: targetRes,
             slaTargetReaction: targetReact,
+
             changelog: history.map((h: any) => ({
                 author: h.author?.displayName || 'Unknown',
                 created: h.created,
