@@ -229,9 +229,25 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         transitions.push({ time: new Date(created).getTime(), status: 'Open', originalStatus: 'Open' })
 
         // Specific Anchors requested by user
-        let tCreation: number | null = null
-        let tInProgress: number | null = null
+        let tBacklog: number | null = null
+        let tPresaInCarico: number | null = null
         let tDone: number | null = null
+        let tLinkCause: number | null = null // Fallback for Backlog
+
+        // Check initial state for Backlog
+        const firstStatusChange = history.find((h: any) => h.items.some((i: any) => i.field === 'status'))
+        if (firstStatusChange) {
+            const item = firstStatusChange.items.find((i: any) => i.field === 'status')
+            if (item && item.fromString === 'Backlog') {
+                tBacklog = new Date(created).getTime()
+            }
+        } else {
+            // No status changes. If current status is Backlog, then it was created in Backlog.
+            if (status === 'Backlog') {
+                tBacklog = new Date(created).getTime()
+            }
+        }
+
 
         for (const h of history) {
             const item = h.items.find((i: any) => i.field === 'status')
@@ -248,22 +264,36 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
                 })
 
                 // Detect Anchors
-                // "utilizza come data di creazione... Backlog -> Presa in carico"
-                if (!tCreation && from === 'Backlog' && to === 'Presa in carico') {
-                    tCreation = ts
+
+                // "data di inserimento nel backlog è quella che ha l'item con toString: Backlog"
+                if (!tBacklog && to === 'Backlog') {
+                    tBacklog = ts
                 }
 
-                // "utilizza come data di presa in carico... Presa in carico -> In Progress"
-                // This seems to define the end of Reaction / Start of Work
-                if (!tInProgress && from === 'Presa in carico' && to === 'In Progress') {
-                    tInProgress = ts
+                // "La data della presa in carico è quella che ha l'item con fromString: Backlog, toString: Presa in carico"
+                if (!tPresaInCarico && from === 'Backlog' && to === 'Presa in carico') {
+                    tPresaInCarico = ts
                 }
 
-                // "utilizza come data di chiusura... -> Done"
+                // "La data della chiusura è quella che ha l'item con toString: Done"
                 if (to === 'Done') {
-                    tDone = ts // Use latest Done? Or first? Usually Resolution is final, so latest is safer if reopened.
+                    tDone = ts // Use latest Done? By default overwrite
                 }
             }
+
+            // Fallback Check for "This work item causes..."
+            // This might not be a 'status' field, so iterate ALL items
+            if (!tLinkCause) {
+                const causeItem = h.items.find((i: any) => i.toString && i.toString.startsWith('This work item causes '))
+                if (causeItem) {
+                    tLinkCause = new Date(h.created).getTime()
+                }
+            }
+        }
+
+        // Apply Fallback for Backlog
+        if (!tBacklog && tLinkCause) {
+            tBacklog = tLinkCause
         }
 
         // Apply Logic if Anchors exist
@@ -271,54 +301,50 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         let calculatedResolution = 0
         let calculatedPause = 0
 
+        // Determine if 24x7 or Business Hours
+        // "Solo per le issue Expedite, deve essere considerato il tempo effettivo se create dal 01/02/2026"
+        const effectiveCreated = tBacklog ? new Date(tBacklog) : new Date(created)
+        const isExpedite = slaTier === 'Expedite' || priority.toLowerCase() === 'highest' || priority.toLowerCase() === 'critical'
+
+        const thresholdDate = new Date(2026, 1, 1) // 1st Feb 2026
+        const isPostFeb2026 = effectiveCreated.getTime() >= thresholdDate.getTime()
+
+        const is24x7 = isExpedite && isPostFeb2026
+
+        const calcDuration = (start: number, end: number): number => {
+            if (is24x7) {
+                return Math.max(0, (end - start) / (1000 * 60))
+            } else {
+                return calculateBusinessMinutes(new Date(start), new Date(end))
+            }
+        }
+
         // --- Reaction Time ---
-        // Definition: Time between "Creation" (Backlog->Presa in carico) and "Presa in carico" (Presa in carico->In Progress)
-        if (tCreation && tInProgress) {
-            calculatedReaction = (tInProgress - tCreation) / (1000 * 60)
+        // Backlog -> Presa in carico
+        if (tBacklog && tPresaInCarico) {
+            calculatedReaction = calcDuration(tBacklog, tPresaInCarico)
             reactionMinutes = calculatedReaction
         } else {
-            // Fallback to standard status-based approach if specific transitions missing
-            // (e.g. if issue went straight to In Progress)
-            // Re-calculate using status durations as fallback
-            let tempReaction = 0
-            const reactionStatuses = ['Open', 'To Do', 'Backlog', 'New']
-            for (let i = 0; i < transitions.length - 1; i++) {
-                const start = transitions[i]
-                const end = transitions[i + 1]
-                if (reactionStatuses.includes(start.status)) {
-                    tempReaction += (end.time - start.time) / (1000 * 60)
-                }
-            }
-            // Only use fallback if Anchors were missing. 
-            // If tCreation exists but tInProgress doesn't, we can't calculate per user rule.
-            // But let's keep the value 0 if not met? Or fallback?
-            // "Utilizza il valore..." implies strictness.
-            // If the transition didn't happen, maybe Reaction is not met or calc is 0.
-            // Let's fallback for robustness.
-            if (tCreation && !tInProgress) {
-                // Started reaction but not finished? Open ended?
+            if (tBacklog && !tPresaInCarico) {
+                // Pending Reaction
                 const now = Date.now()
-                reactionMinutes = (now - tCreation) / (1000 * 60)
-            } else if (!tCreation) {
-                // Use generic
-                reactionMinutes = tempReaction
+                reactionMinutes = calcDuration(tBacklog, now) // Show current waiting time
+            } else {
+                // Completely fallback (no anchors found)
+                // Use generic sum if we want, or just 0
             }
         }
 
         // --- Resolution Time ---
-        // Definition: Time between "In Progress" anchor and "Done" anchor
-        if (tInProgress) {
+        // Presa in carico -> Done
+        if (tPresaInCarico) {
             const endWork = tDone || Date.now()
 
-            // Calculate total duration
-            // But need to subtract Pauses that happened within this interval
+            // Gross Working Time
+            const grossDuration = calcDuration(tPresaInCarico, endWork)
 
-            // Iterate transitions that happened AFTER tInProgress and BEFORE endWork
-            // Actually, easier to iterate all intervals and check overlap with [tInProgress, endWork]
-
-            let totalWorkDuration = 0
+            // Calculate Pauses overlap
             let totalPauseDuration = 0
-
             const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
 
             for (let i = 0; i < transitions.length; i++) {
@@ -326,24 +352,17 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
                 const nextTranTime = (i < transitions.length - 1) ? transitions[i + 1].time : Date.now()
 
                 // Interval [tran.time, nextTranTime]
-                // Intersect with [tInProgress, endWork]
-                const start = Math.max(tran.time, tInProgress)
+                const start = Math.max(tran.time, tPresaInCarico)
                 const end = Math.min(nextTranTime, endWork)
 
                 if (end > start) {
-                    const duration = (end - start) / (1000 * 60)
                     if (pauseStatuses.some(ps => ps.toLowerCase() === tran.status.toLowerCase())) {
-                        totalPauseDuration += duration
-                    } else {
-                        // Assume everything else is work? Or just strictly non-pause?
-                        // Resolution Time usually includes Work + Pause - Pause = Work.
-                        // So effectively Resolution Time = (endWork - tInProgress) - Pauses.
+                        totalPauseDuration += calcDuration(start, end)
                     }
                 }
             }
 
-            const grossDuration = (endWork - tInProgress) / (1000 * 60)
-            calculatedResolution = grossDuration - totalPauseDuration
+            calculatedResolution = Math.max(0, grossDuration - totalPauseDuration)
             calculatedPause = totalPauseDuration
 
             workingTime = calculatedResolution
@@ -351,24 +370,6 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
 
         } else {
             // Fallback
-            // ... (generic calculation logic would go here if needed, but let's stick to the requested mainly)
-            // Standard calc:
-            const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
-            const workStatuses = ['In Progress', 'Presa in carico', 'Developer Testing', 'READY IN HOTFIX']
-
-            let tempWork = 0
-            let tempPause = 0
-
-            for (let i = 0; i < transitions.length; i++) {
-                const start = transitions[i]
-                const end = (i < transitions.length - 1) ? transitions[i + 1].time : Date.now()
-                const dur = (end - start.time) / (1000 * 60)
-
-                if (workStatuses.some(s => s.toLowerCase() === start.status.toLowerCase())) tempWork += dur
-                if (pauseStatuses.some(s => s.toLowerCase() === start.status.toLowerCase())) tempPause += dur
-            }
-            workingTime = tempWork
-            waitingTime = tempPause
         }
 
         // Targets
@@ -385,7 +386,7 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         const reactionMet = reactionMinutes <= (targetReact + 0.001)
 
         // Update Effective Creation Date if mapped
-        const effectiveCreated = tCreation ? new Date(tCreation).toISOString() : created
+        const finalCreatedStr = effectiveCreated.toISOString()
 
         parsedIssues.push({
             key,
@@ -434,4 +435,79 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         byPriority,
         issues: parsedIssues
     }
+}
+
+// --- Helper Functions for Business SLA ---
+
+const BUSINESS_START_HOUR = 9
+const BUSINESS_END_HOUR = 18
+
+// Italian Holidays 2024-2026 (Fixed & Moving)
+// Simplified list for major holidays
+const FIXED_HOLIDAYS = [
+    '01-01', // Capodanno
+    '01-06', // Epifania
+    '04-25', // Liberazione
+    '05-01', // Lavoro
+    '06-02', // Repubblica
+    '08-15', // Ferragosto
+    '11-01', // Ognissanti
+    '12-08', // Immacolata
+    '12-25', // Natale
+    '12-26', // Santo Stefano
+]
+
+function isHoliday(date: Date): boolean {
+    const d = date.getDate().toString().padStart(2, '0')
+    const m = (date.getMonth() + 1).toString().padStart(2, '0')
+    const dayMonth = `${m}-${d}`
+
+    if (FIXED_HOLIDAYS.includes(dayMonth)) return true
+
+    // Pasquetta (Easter Monday) - Rough calc or hardcoded for recent years
+    const year = date.getFullYear()
+    const pasquettaDates: Record<number, string> = {
+        2024: '04-01',
+        2025: '04-21',
+        2026: '04-06'
+    }
+    if (pasquettaDates[year] === dayMonth) return true
+
+    return false
+}
+
+function calculateBusinessMinutes(start: Date, end: Date): number {
+    if (start >= end) return 0
+
+    let totalMinutes = 0
+    let current = new Date(start)
+
+    while (current < end) {
+        const isWeekend = current.getDay() === 0 || current.getDay() === 6
+        const isHol = isHoliday(current)
+
+        if (!isWeekend && !isHol) {
+            // Business Day
+            const businessStart = new Date(current)
+            businessStart.setHours(BUSINESS_START_HOUR, 0, 0, 0)
+
+            const businessEnd = new Date(current)
+            businessEnd.setHours(BUSINESS_END_HOUR, 0, 0, 0)
+
+            // Overlap of TaskInterval [start, end] AND BusinessHours [businessStart, businessEnd]
+
+            const intervalStart = start > businessStart ? start : businessStart
+            const intervalEnd = end < businessEnd ? end : businessEnd
+
+            if (intervalEnd > intervalStart) {
+                totalMinutes += (intervalEnd.getTime() - intervalStart.getTime()) / (1000 * 60)
+            }
+        }
+
+        // Move to next day start
+        current.setDate(current.getDate() + 1)
+        current.setHours(0, 0, 0, 0)
+    }
+
+    return totalMinutes
 }
