@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Card, Typography, Button, Input, Badge } from '@design-system'
+import { Card, Typography, Button, Input, IssueStatusBadge } from '@design-system'
 import { Project } from '../types'
 import { IssuesConfigModal } from './IssuesConfigModal'
 
@@ -69,7 +69,7 @@ export function IssuesDashboard({ currentProject }: IssuesDashboardProps): JSX.E
         <div className="p-6 h-full flex flex-col">
             <header className="mb-6 flex justify-between items-center">
                 <div>
-                    <Typography variant="h2" neon>Issues Monitor</Typography>
+                    <Typography variant="h2">Issues Monitor</Typography>
                     <Typography variant="body" className="text-gray-400 text-sm">
                         {db.issues.length} Monitored Issues • Last Sync: {db.lastSync ? new Date(db.lastSync).toLocaleString() : 'Never'}
                     </Typography>
@@ -116,12 +116,7 @@ export function IssuesDashboard({ currentProject }: IssuesDashboardProps): JSX.E
                                     <td className="p-4 font-mono text-brand-cyan">{issue.key}</td>
                                     <td className="p-4 text-white font-medium">{issue.summary}</td>
                                     <td className="p-4">
-                                        <Badge variant={
-                                            issue.status === 'Done' || issue.status === 'Resolved' ? 'success' :
-                                                issue.status === 'In Progress' ? 'info' : 'default'
-                                        }>
-                                            {issue.status}
-                                        </Badge>
+                                        <IssueStatusBadge status={issue.status} />
                                     </td>
                                     <td className="p-4 text-gray-400 text-sm">{issue.priority}</td>
                                     <td className="p-4 text-gray-500 text-xs font-mono">

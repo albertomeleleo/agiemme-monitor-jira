@@ -9,7 +9,7 @@ import { SLALegend } from './organisms/SLA/SLALegend'
 import { SLACharts } from './organisms/SLA/SLACharts'
 import { JiraFetchModal } from './organisms/SLA/JiraFetchModal'
 import { IssueDetailModal } from './organisms/SLA/IssueDetailModal'
-import { Card, Typography, Button } from '@design-system'
+import { Card, Typography } from '@design-system'
 
 interface SLADashboardProps {
     currentProject: Project
@@ -195,7 +195,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                     <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
                         onClick={() => fileInputRef.current?.click()}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-brand-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -211,7 +211,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                     <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
                         onClick={() => setShowJiraModal(true)}
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-brand-purple/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+
                         <div className="text-6xl mb-6 grayscale group-hover:grayscale-0 transition-all scale-90 group-hover:scale-100 duration-300">⚡</div>
                         <Typography variant="h3" className="text-white mb-2">Fetch from Jira</Typography>
                         <Typography variant="body" className="text-gray-400 max-w-xs">Connect directly to Jira Cloud to analyze real-time data.</Typography>

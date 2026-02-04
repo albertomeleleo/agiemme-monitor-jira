@@ -20,7 +20,7 @@ export function Upload({ onUploadSuccess, currentProject }: UploadProps): JSX.El
         <button
             onClick={handleUpload}
             disabled={!currentProject}
-            className="px-4 py-2 neon-button text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-brand-cyan text-brand-deep rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
         >
             <span>PO</span> Import PDF
         </button>

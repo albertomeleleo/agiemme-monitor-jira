@@ -22,21 +22,21 @@ export function SLAStatsGrid({ validIssues, rejectedIssues }: SLAStatsGridProps)
 
             <Card variant="glass" className="!p-6 border border-white/10">
                 <Typography variant="mono" className="text-brand-text-sec text-xs font-bold uppercase">Compliance</Typography>
-                <div className={`text-4xl font-bold mt-2 ${compliance >= 90 ? 'text-green-400' : compliance >= 75 ? 'text-yellow-400' : 'text-red-400'} drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]`}>
+                <div className={`text-4xl font-bold mt-2 ${compliance >= 90 ? 'text-green-400' : compliance >= 75 ? 'text-yellow-400' : 'text-red-400'}`}>
                     {compliance.toFixed(1)}%
                 </div>
             </Card>
 
             <Card variant="glass" className="!p-6 border border-white/10">
                 <Typography variant="mono" className="text-brand-text-sec text-xs font-bold uppercase">Met SLA</Typography>
-                <div className="text-4xl font-bold text-green-400 mt-2 hover:drop-shadow-[0_0_8px_rgba(74,222,128,0.5)] transition-all">
+                <div className="text-4xl font-bold text-green-400 mt-2 transition-all">
                     {metSLA}
                 </div>
             </Card>
 
             <Card variant="glass" className="!p-6 border border-white/10">
                 <Typography variant="mono" className="text-brand-text-sec text-xs font-bold uppercase">Missed SLA</Typography>
-                <div className="text-4xl font-bold text-red-400 mt-2 hover:drop-shadow-[0_0_8px_rgba(248,113,113,0.5)] transition-all">
+                <div className="text-4xl font-bold text-red-400 mt-2 transition-all">
                     {missedSLA}
                 </div>
             </Card>

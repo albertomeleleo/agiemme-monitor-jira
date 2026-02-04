@@ -38,13 +38,13 @@ export function IssueTypeDistributionChart({ releases }: ChartProps): JSX.Elemen
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-xs text-brand-text-sec">Total Items</span>
-                    <span className="text-xl font-bold text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.4)]">{totalBugfixes + totalEvolutives}</span>
+                    <span className="text-xl font-bold text-white">{totalBugfixes + totalEvolutives}</span>
                 </div>
             </div>
             <div className="flex justify-center gap-4 mt-2">
                 {pieData.map(item => (
                     <div key={item.name} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full shadow-[0_0_5px_rgba(0,0,0,0.5)]" style={{ backgroundColor: item.color }} />
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                         <span className="text-sm text-brand-text-sec">{item.name}</span>
                     </div>
                 ))}

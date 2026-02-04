@@ -29,10 +29,10 @@ export function Button({
 
     // Color/Style variants based on brand.md
     const variants = {
-        primary: "bg-brand-cyan text-brand-deep shadow-[0_0_10px_rgba(0,242,255,0.3)] hover:shadow-[0_0_20px_rgba(0,242,255,0.6)] hover:brightness-110 border border-transparent",
-        secondary: "bg-brand-deep/50 text-brand-cyan border border-brand-cyan/50 hover:bg-brand-cyan/10 hover:border-brand-cyan shadow-[0_0_5px_rgba(0,242,255,0.1)]",
+        primary: "bg-brand-cyan text-brand-deep hover:brightness-110 border border-transparent",
+        secondary: "bg-brand-deep/50 text-brand-cyan border border-brand-cyan/50 hover:bg-brand-cyan/10 hover:border-brand-cyan",
         ghost: "bg-transparent text-brand-text-sec hover:text-white hover:bg-white/5 border border-transparent",
-        danger: "bg-red-600 text-white]",
+        danger: "bg-red-600 text-white hover:bg-red-700",
         icon: "p-2 bg-transparent text-gray-400 hover:text-white hover:bg-white/10 rounded-full aspect-square"
     }
 
@@ -40,6 +40,7 @@ export function Button({
         <button
             className={`${baseStyles} ${sizeStyles[size]} ${variants[variant]} ${fullWidth ? 'w-full' : ''} ${className}`}
             disabled={isLoading || props.disabled}
+            aria-busy={isLoading}
             {...props}
         >
             {isLoading ? (

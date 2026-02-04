@@ -40,7 +40,7 @@ export function HelpPage(): JSX.Element {
         <div className="p-8 max-w-4xl mx-auto flex flex-col h-full">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">Help & Settings</h1>
+                <h1 className="text-3xl font-bold text-white mb-2">Help & Settings</h1>
                 <p className="text-brand-text-sec">Configure your Jira integration and read the user manual.</p>
             </div>
 
@@ -48,17 +48,17 @@ export function HelpPage(): JSX.Element {
             <div className="flex gap-4 mb-8 border-b border-brand-cyan/20 pb-1">
                 <button
                     onClick={() => setActiveTab('settings')}
-                    className={`pb-2 px-1 text-sm font-bold uppercase transition-colors relative ${activeTab === 'settings' ? 'text-brand-cyan text-shadow-neon' : 'text-brand-text-sec hover:text-white'}`}
+                    className={`pb-2 px-1 text-sm font-bold uppercase transition-colors relative ${activeTab === 'settings' ? 'text-brand-cyan' : 'text-brand-text-sec hover:text-white'}`}
                 >
                     Settings
-                    {activeTab === 'settings' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-cyan shadow-[0_0_8px_rgba(0,242,255,0.8)] rounded-t-full"></span>}
+                    {activeTab === 'settings' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-cyan rounded-t-full"></span>}
                 </button>
                 <button
                     onClick={() => setActiveTab('manual')}
-                    className={`pb-2 px-1 text-sm font-bold uppercase transition-colors relative ${activeTab === 'manual' ? 'text-brand-cyan text-shadow-neon' : 'text-brand-text-sec hover:text-white'}`}
+                    className={`pb-2 px-1 text-sm font-bold uppercase transition-colors relative ${activeTab === 'manual' ? 'text-brand-cyan' : 'text-brand-text-sec hover:text-white'}`}
                 >
                     User Manual
-                    {activeTab === 'manual' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-cyan shadow-[0_0_8px_rgba(0,242,255,0.8)] rounded-t-full"></span>}
+                    {activeTab === 'manual' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-cyan rounded-t-full"></span>}
                 </button>
             </div>
 
@@ -125,7 +125,7 @@ export function HelpPage(): JSX.Element {
                                 <button
                                     disabled={loading}
                                     onClick={handleSave}
-                                    className="px-6 py-2 neon-button disabled:opacity-50 text-white rounded-lg font-bold transition-all"
+                                    className="px-6 py-2 bg-brand-cyan text-brand-deep disabled:opacity-50 rounded-lg font-bold transition-all hover:brightness-110"
                                 >
                                     {loading ? 'Verifying...' : 'Save & Verify'}
                                 </button>

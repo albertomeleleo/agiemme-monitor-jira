@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Badge, Typography } from '@design-system'
+import { Card, Badge, Typography, IssueStatusBadge } from '@design-system'
 import { SLAIssue } from '../../../../../shared/sla-types'
 import { formatDuration } from './utils'
 
@@ -31,23 +31,25 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-brand-text-sec">
+                    <caption className="sr-only">Jira issues SLA analysis details, including reaction and resolution times</caption>
                     <thead className="bg-brand-deep/80 text-white uppercase font-medium">
                         <tr>
-                            <th className="px-6 py-4 w-10"></th>
-                            <th className="px-6 py-4">Key</th>
-                            <th className="px-6 py-4">Priority</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4 text-center border-l border-white/10">Reaction (Target: 00:15)</th>
-                            <th className="px-6 py-4 text-center border-l border-white/10" colSpan={3}>Resolution (hh:mm:ss)</th>
+                            <th className="px-6 py-4 w-10" scope="col"></th>
+                            <th className="px-6 py-4" scope="col">Key</th>
+                            <th className="px-6 py-4" scope="col">Priority</th>
+                            <th className="px-6 py-4" scope="col">Status</th>
+                            <th className="px-6 py-4 text-center border-l border-white/10" scope="col">Reaction (Target: 00:15)</th>
+                            <th className="px-6 py-4 text-center border-l border-white/10" colSpan={3} scope="col">Resolution (hh:mm:ss)</th>
                         </tr>
-                        <tr className="bg-brand-deep/30 text-xs">
-                            <th className="px-6 py-2"></th>
-                            <th className="px-6 py-2"></th>
-                            <th className="px-6 py-2"></th>
-                            <th className="px-6 py-2 text-center border-l border-white/10">Actual</th>
-                            <th className="px-6 py-2 text-right border-l border-white/10">Target</th>
-                            <th className="px-6 py-2 text-right">Actual (Net)</th>
-                            <th className="px-6 py-2 text-right">Paused</th>
+                        <tr className="bg-brand-deep/30 text-[10px] text-gray-400">
+                            <th className="px-6 py-2" scope="col"></th>
+                            <th className="px-6 py-2" scope="col"></th>
+                            <th className="px-6 py-2" scope="col"></th>
+                            <th className="px-6 py-2 text-center" scope="col">Actual</th>
+                            <th className="px-6 py-2 text-center border-l border-white/10" scope="col">Actual</th>
+                            <th className="px-6 py-2 text-right border-l border-white/10" scope="col">Target</th>
+                            <th className="px-6 py-2 text-right" scope="col">Actual (Net)</th>
+                            <th className="px-6 py-2 text-right" scope="col">Paused</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700">
@@ -71,15 +73,17 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                             {issue.changelog && issue.changelog.length > 0 && (
                                                 <button
                                                     onClick={(e) => toggleExpand(e, issue.key)}
+                                                    aria-expanded={isExpanded}
+                                                    aria-label={`${isExpanded ? 'Collapse' : 'Expand'} changelog for ${issue.key}`}
                                                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 text-brand-cyan transition-colors"
                                                 >
-                                                    <span className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-90' : 'rotate-0'}`}>
+                                                    <span className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-90' : 'rotate-0'}`} aria-hidden="true">
                                                         ▶
                                                     </span>
                                                 </button>
                                             )}
                                         </td>
-                                        <td className={`px-6 py-4 font-mono font-medium ${isRejected ? 'text-orange-200' : 'text-white'}`}>
+                                        <th scope="row" className={`px-6 py-4 font-mono font-medium text-left ${isRejected ? 'text-orange-200' : 'text-white'}`}>
                                             <div className="flex items-center gap-2">
                                                 {isRejected && <span className="text-orange-500">⚠</span>}
                                                 <div>
@@ -87,7 +91,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                                     <div className="text-[10px] opacity-70">{issue.issueType}</div>
                                                 </div>
                                             </div>
-                                        </td>
+                                        </th>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col items-start gap-1">
                                                 <Badge variant={
@@ -100,8 +104,8 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                                 <span className="text-[10px] text-gray-500">Jira: {issue.priority}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-xs font-medium">
-                                            {isRejected ? <span className="text-orange-400">REJECTED</span> : issue.status}
+                                        <td className="px-6 py-4">
+                                            <IssueStatusBadge status={isRejected ? 'REJECTED' : issue.status} />
                                         </td>
 
                                         {/* Reaction Time */}

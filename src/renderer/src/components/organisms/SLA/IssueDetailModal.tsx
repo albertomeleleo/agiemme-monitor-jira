@@ -17,7 +17,7 @@ export function IssueDetailModal({ issue, onClose }: IssueDetailModalProps): JSX
             maxWidth="3xl"
             title={
                 <div>
-                    <Typography variant="h2" neon>{issue.key} {isRejected && <Badge variant="warning" label="REJECTED" />}</Typography>
+                    <Typography variant="h2">{issue.key} {isRejected && <Badge variant="warning" label="REJECTED" />}</Typography>
                     <Typography variant="body" className="mt-1 text-gray-400">{issue.summary}</Typography>
                 </div>
             }

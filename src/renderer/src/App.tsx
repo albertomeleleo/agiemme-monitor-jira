@@ -14,7 +14,7 @@ import { ReleaseList } from './components/ReleaseList'
 import { ReleaseCadenceChart } from './components/charts/ReleaseCadenceChart'
 import { IssueTypeDistributionChart } from './components/charts/IssueTypeDistributionChart'
 import { ReleaseTimelineChart } from './components/charts/ReleaseTimelineChart'
-import { Typography, Card, Badge, Button, Input, Select } from '@design-system'
+import { Typography, Card, Button, Input, Select } from '@design-system'
 
 type ViewMode = 'cards' | 'issues' | 'sla'
 type SortOption = 'date' | 'bugfixes' | 'evolutives' | 'regression'
@@ -146,22 +146,24 @@ function App(): JSX.Element {
 
     return (
         <div className="flex h-screen bg-brand-deep text-gray-100 font-sans overflow-hidden">
-            <Sidebar
-                projects={projects}
-                currentProject={currentProject}
-                currentView={projectView}
-                onSelectView={setProjectView}
-                onSelectProject={(p) => {
-                    if (p.name !== currentProject?.name) {
-                        setCurrentProject(p)
-                        setProjectView('releases')
-                    }
-                }}
-                onCreateProject={handleCreateProject}
-                onRefresh={refreshProjects}
-            />
+            <nav aria-label="Main Sidebar">
+                <Sidebar
+                    projects={projects}
+                    currentProject={currentProject}
+                    currentView={projectView}
+                    onSelectView={setProjectView}
+                    onSelectProject={(p) => {
+                        if (p.name !== currentProject?.name) {
+                            setCurrentProject(p)
+                            setProjectView('releases')
+                        }
+                    }}
+                    onCreateProject={handleCreateProject}
+                    onRefresh={refreshProjects}
+                />
+            </nav>
 
-            <div className="flex-1 flex flex-col h-screen overflow-hidden">
+            <main className="flex-1 flex flex-col h-screen overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-6 relative">
 
                     {currentProject ? (
@@ -177,7 +179,9 @@ function App(): JSX.Element {
                                             {currentProject.name}
                                         </h1>
                                         <div className="flex gap-1 ml-2">
-                                            <Button variant="icon" onClick={() => document.getElementById('logo-upload')?.click()} title="Upload Logo">✏️</Button>
+                                            <Button variant="icon" onClick={() => document.getElementById('logo-upload')?.click()} title="Upload Logo" aria-label="Upload Project Logo">
+                                                <span role="img" aria-hidden="true">✏️</span>
+                                            </Button>
 
                                             {/* Hidden File Input for Logo */}
                                             <input
@@ -193,7 +197,9 @@ function App(): JSX.Element {
                                                 }}
                                             />
 
-                                            <Button variant="icon" onClick={() => setIsSettingsOpen(true)} title="Settings" className="text-gray-400 hover:text-brand-cyan">⚙️</Button>
+                                            <Button variant="icon" onClick={() => setIsSettingsOpen(true)} title="Settings" aria-label="Project Settings" className="text-gray-400 hover:text-brand-cyan">
+                                                <span role="img" aria-hidden="true">⚙️</span>
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -208,7 +214,7 @@ function App(): JSX.Element {
                                         </Card>
                                         <Card variant="glass" className="!px-4 !py-2 border border-white/10">
                                             <Typography variant="caption" className="block text-brand-text-sec">Regressions</Typography>
-                                            <Typography variant="h3" className="text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">{regressionCount}</Typography>
+                                            <Typography variant="h3" className="text-red-400">{regressionCount}</Typography>
                                         </Card>
                                     </div>
                                 )}
@@ -230,7 +236,7 @@ function App(): JSX.Element {
                                     {/* FILTERS & CONTROLS */}
                                     <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
                                         <div className="relative flex-1">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" role="img" aria-hidden="true">🔍</span>
                                             <Input
                                                 fullWidth
                                                 placeholder="Search in project..."
@@ -255,24 +261,29 @@ function App(): JSX.Element {
                                                 variant="secondary"
                                                 onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
                                                 title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+                                                aria-label={`Sort direction: ${sortDirection === 'asc' ? 'ascending' : 'descending'}`}
                                             >
-                                                {sortDirection === 'asc' ? '⬆️' : '⬇️'}
+                                                <span role="img" aria-hidden="true">{sortDirection === 'asc' ? '⬆️' : '⬇️'}</span>
                                             </Button>
 
-                                            <div className="flex bg-brand-deep/50 p-1 rounded-lg border border-white/10 ml-2">
+                                            <div className="flex bg-brand-deep/50 p-1 rounded-lg border border-white/10 ml-2" role="group" aria-label="View Mode Toggle">
                                                 <button
                                                     onClick={() => setViewMode('cards')}
                                                     className={`p-2 rounded-md transition-colors ${viewMode === 'cards' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
                                                     title="Card View"
+                                                    aria-label="Switch to Card View"
+                                                    aria-pressed={viewMode === 'cards'}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                                                 </button>
                                                 <button
                                                     onClick={() => setViewMode('issues')}
                                                     className={`p-2 rounded-md transition-colors ${viewMode === 'issues' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
                                                     title="List View"
+                                                    aria-label="Switch to List View"
+                                                    aria-pressed={viewMode === 'issues'}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                                                 </button>
                                             </div>
                                         </div>
@@ -296,7 +307,7 @@ function App(): JSX.Element {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                                     {processedReleases.map((release) => (
                                                         <ReleaseCard
-                                                            key={release.version}
+                                                            key={release.filename}
                                                             release={release}
                                                             onClick={() => setSelectedRelease(release)}
                                                             onDelete={handleDeleteRelease}
@@ -323,8 +334,8 @@ function App(): JSX.Element {
                     ) : (
                         // NO PROJECT SELECTED
                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                            <div className="w-24 h-24 mb-6 rounded-2xl bg-gradient-to-br from-brand-cyan/20 to-brand-purple/20 flex items-center justify-center border border-white/10 animate-float">
-                                <span className="text-4xl">🚀</span>
+                            <div className="w-24 h-24 mb-6 rounded-2xl bg-brand-card/40 flex items-center justify-center border border-white/10 animate-float">
+                                <span className="text-4xl" role="img" aria-label="Rocket">🚀</span>
                             </div>
                             <Typography variant="h2" className="text-white mb-2">Welcome to Release Analyzer</Typography>
                             <Typography variant="body" className="text-gray-400 max-w-md">
@@ -334,7 +345,7 @@ function App(): JSX.Element {
                     )}
 
                 </div>
-            </div >
+            </main>
 
             {/* MODALS */}
             {
@@ -356,7 +367,7 @@ function App(): JSX.Element {
                     />
                 )
             }
-        </div >
+        </div>
     )
 }
 

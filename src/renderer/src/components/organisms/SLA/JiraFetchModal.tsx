@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Modal, Input, Select, Button, Typography, Card } from '@design-system' // Assuming these exist from context
-import { JiraConfig, JiraProject } from '../../../../shared/jira-types'
+import { JiraConfig, JiraProject } from '../../../../../shared/jira-types'
 
 interface JiraFetchModalProps {
     onClose: () => void
@@ -107,7 +107,7 @@ export function JiraFetchModal({ onClose, onFetch }: JiraFetchModalProps): JSX.E
             title={
                 <div className="flex items-center gap-2">
                     <span className="text-2xl">⚡</span>
-                    <Typography variant="h2" neon>Analyze from Jira</Typography>
+                    <Typography variant="h2">Analyze from Jira</Typography>
                 </div>
             }
         >

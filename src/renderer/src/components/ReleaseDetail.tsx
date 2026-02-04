@@ -25,7 +25,7 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
             maxWidth="5xl"
             title={
                 <div>
-                    <Typography variant="h2" neon>{release.internalTitle || release.filename}</Typography>
+                    <Typography variant="h2">{release.internalTitle || release.filename}</Typography>
                     <Typography variant="mono" className="mt-1 flex gap-3 text-brand-text-sec">
                         <span>📅 {release.date || 'Unknown'}</span>
                         <span>🕒 {release.time || '--:--'}</span>
@@ -43,13 +43,13 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
             <div className="flex border-b border-white/10 mb-6 space-x-6">
                 <button
                     onClick={() => setActiveTab('overview')}
-                    className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'overview' ? 'border-brand-cyan text-brand-cyan drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]' : 'border-transparent text-gray-500 hover:text-white'}`}
+                    className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'overview' ? 'border-brand-cyan text-brand-cyan' : 'border-transparent text-gray-500 hover:text-white'}`}
                 >
                     Overview & Items
                 </button>
                 <button
                     onClick={() => setActiveTab('raw')}
-                    className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'raw' ? 'border-brand-cyan text-brand-cyan drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]' : 'border-transparent text-gray-500 hover:text-white'}`}
+                    className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'raw' ? 'border-brand-cyan text-brand-cyan' : 'border-transparent text-gray-500 hover:text-white'}`}
                 >
                     Raw Content
                 </button>
@@ -63,14 +63,14 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
                             <Typography variant="caption" className="uppercase font-bold tracking-wider">Bugfixes</Typography>
                             <div className="text-3xl font-bold text-white mt-1">{release.bugfixCount}</div>
                             <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
-                                <div className="h-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" style={{ width: `${bugfixPct}%` }} />
+                                <div className="h-full bg-red-500" style={{ width: `${bugfixPct}%` }} />
                             </div>
                         </Card>
                         <Card variant="glass" className="!p-4 bg-brand-card/30">
                             <Typography variant="caption" className="uppercase font-bold tracking-wider">Evolutives</Typography>
                             <div className="text-3xl font-bold text-white mt-1">{release.evolutiveCount}</div>
                             <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
-                                <div className="h-full bg-brand-cyan shadow-[0_0_10px_rgba(0,242,255,0.5)]" style={{ width: `${evolutivePct}%` }} />
+                                <div className="h-full bg-brand-cyan" style={{ width: `${evolutivePct}%` }} />
                             </div>
                         </Card>
                         <Card variant="glass" className={`!p-4 ${release.isRegression ? 'bg-red-900/20 border-red-900/50' : 'bg-brand-card/30'}`}>
@@ -107,7 +107,7 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
                         {/* Evolutives */}
                         <div className="space-y-4">
                             <Typography variant="h3" className="border-b border-white/10 pb-2 flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-brand-cyan shadow-[0_0_8px_rgba(0,242,255,0.8)]" /> Evolutives
+                                <span className="w-2 h-2 rounded-full bg-brand-cyan" /> Evolutives
                             </Typography>
                             {evolutives.length > 0 ? (
                                 <div className="space-y-3">

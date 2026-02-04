@@ -143,7 +143,7 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
             title={
                 <div className="flex items-center gap-2">
                     <span className="text-2xl">📥</span>
-                    <Typography variant="h2" neon>Import from Jira</Typography>
+                    <Typography variant="h2">Import from Jira</Typography>
                 </div>
             }
         >
@@ -260,7 +260,7 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                                 <Typography variant="caption" className="uppercase">Bugs Found</Typography>
                             </Card>
                             <Card variant="glass" className="bg-brand-deep/50 text-center !p-4">
-                                <div className="text-2xl font-bold text-brand-cyan drop-shadow-[0_0_8px_rgba(0,242,255,0.6)]">{issues.filter(i => i.fields.issuetype.name !== 'Bug').length}</div>
+                                <div className="text-2xl font-bold text-brand-cyan">{issues.filter(i => i.fields.issuetype.name !== 'Bug').length}</div>
                                 <Typography variant="caption" className="uppercase">Stories/Tasks</Typography>
                             </Card>
                         </div>

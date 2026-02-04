@@ -79,7 +79,7 @@ export function IssuesConfigModal({ currentConfig, onClose, onSave }: IssuesConf
         <Modal
             isOpen={true}
             onClose={onClose}
-            title={<Typography variant="h2" neon>Automation Settings</Typography>}
+            title={<Typography variant="h2">Automation Settings</Typography>}
         >
             <div className="space-y-6">
                 <div>

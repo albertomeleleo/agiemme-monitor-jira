@@ -39,6 +39,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                     <div key={project.name}>
                         <button
                             onClick={() => onSelectProject(project)}
+                            aria-current={currentProject?.name === project.name ? 'page' : undefined}
                             className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${currentProject?.name === project.name
                                 ? 'bg-brand-cyan/10 text-brand-cyan border-l-2 border-brand-cyan'
                                 : 'text-brand-text-sec hover:text-white hover:bg-brand-card/50'
@@ -60,6 +61,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                             <div className="ml-4 mt-1 pl-4 border-l border-white/10 space-y-1 animate-in slide-in-from-left-2 duration-200">
                                 <button
                                     onClick={() => onSelectView?.('releases')}
+                                    aria-current={currentView === 'releases' ? 'location' : undefined}
                                     className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'releases'
                                         ? 'text-brand-cyan bg-brand-cyan/5'
                                         : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -69,6 +71,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                                 </button>
                                 <button
                                     onClick={() => onSelectView?.('sla')}
+                                    aria-current={currentView === 'sla' ? 'location' : undefined}
                                     className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'sla'
                                         ? 'text-brand-cyan bg-brand-cyan/5'
                                         : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -78,6 +81,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                                 </button>
                                 <button
                                     onClick={() => onSelectView?.('issues')}
+                                    aria-current={currentView === 'issues' ? 'location' : undefined}
                                     className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'issues'
                                         ? 'text-brand-cyan bg-brand-cyan/5'
                                         : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -104,16 +108,17 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                             onKeyDown={e => e.key === 'Enter' && handleCreate()}
                         />
                         <div className="flex gap-2">
-                            <button onClick={handleCreate} className="flex-1 neon-button text-xs py-1.5 rounded">Create</button>
+                            <button onClick={handleCreate} className="flex-1 bg-brand-cyan text-brand-deep text-xs py-1.5 rounded font-bold hover:brightness-110">Create</button>
                             <button onClick={() => setIsCreating(false)} className="flex-1 bg-transparent border border-white/20 text-brand-text-sec text-xs py-1.5 rounded hover:bg-brand-card/50 hover:text-white">Cancel</button>
                         </div>
                     </div>
                 ) : (
                     <button
                         onClick={() => setIsCreating(true)}
+                        aria-label="Add new project"
                         className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-brand-text-sec border border-dashed border-white/10 rounded-lg hover:text-white hover:border-brand-cyan hover:bg-brand-cyan/5 transition-all"
                     >
-                        + New Project
+                        <span role="img" aria-hidden="true">+</span> New Project
                     </button>
                 )}
             </div>
@@ -121,9 +126,10 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
             <div className="mt-4 pt-4 border-t border-gray-800">
                 <button
                     onClick={() => setShowJiraModal(true)}
+                    aria-label="Import issues from Jira"
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-brand-blue border border-dashed border-brand-blue/30 rounded-lg hover:text-white hover:bg-brand-blue/20 transition-all"
                 >
-                    📥 Import from Jira
+                    <span role="img" aria-hidden="true">📥</span> Import from Jira
                 </button>
             </div>
 

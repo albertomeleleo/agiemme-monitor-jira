@@ -131,7 +131,6 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
                                     <button
                                         onClick={() => {
                                             const currentTiers = [...(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial'])]
-                                            const tierToRemove = currentTiers[idx]
                                             const newTiers = currentTiers.filter((_, i) => i !== idx)
 
                                             // Cleanup config for removed tier... or leave it? Safer to leave data or clean? 

@@ -21,7 +21,7 @@ export function Card({
     const solidStyle = "bg-brand-deep border border-gray-800"
 
     const hoverStyle = hoverable
-        ? "transition-all duration-300 hover:border-brand-cyan/50 hover:shadow-[0_0_15px_rgba(0,242,255,0.1)] cursor-pointer"
+        ? "transition-all duration-300 hover:border-brand-cyan/50 cursor-pointer hover:bg-white/5"
         : ""
 
     return (

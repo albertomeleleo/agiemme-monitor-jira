@@ -22,7 +22,7 @@ export function ReleaseCard({ release, onClick, onDelete }: ReleaseCardProps): J
             </button>
             {release.isRegression && (
                 <div className="absolute top-0 right-0 p-2 bg-red-500/20 rounded-bl-xl border-l border-b border-red-500/30 z-10">
-                    <Typography variant="mono" className="text-red-400 font-bold uppercase text-[10px] drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">Regression</Typography>
+                    <Typography variant="mono" className="text-red-400 font-bold uppercase text-[10px]">Regression</Typography>
                 </div>
             )}
 
