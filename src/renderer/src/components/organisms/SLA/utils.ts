@@ -1,10 +1,23 @@
 import { SLAIssue } from '../../../../../shared/sla-types'
 
-export function formatDuration(minutes: number): string {
-    if (isNaN(minutes)) return '00:00'
-    const h = Math.floor(minutes / 60)
-    const m = Math.floor(minutes % 60)
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+export function formatDuration(minutes: number, includeSeconds = false): string {
+    if (isNaN(minutes)) return includeSeconds ? '00:00:00' : '00:00'
+
+    // Treat minutes as float
+    const totalSeconds = Math.round(minutes * 60)
+    const h = Math.floor(totalSeconds / 3600)
+    const m = Math.floor((totalSeconds % 3600) / 60)
+
+    const hh = h.toString().padStart(2, '0')
+    const mm = m.toString().padStart(2, '0')
+
+    if (includeSeconds) {
+        const s = totalSeconds % 60
+        const ss = s.toString().padStart(2, '0')
+        return `${hh}:${mm}:${ss}`
+    }
+
+    return `${hh}:${mm}`
 }
 
 export function calculateCompliance(issues: SLAIssue[]): number {

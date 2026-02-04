@@ -38,7 +38,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                             <th className="px-6 py-4">Priority</th>
                             <th className="px-6 py-4">Status</th>
                             <th className="px-6 py-4 text-center border-l border-white/10">Reaction (Target: 00:15)</th>
-                            <th className="px-6 py-4 text-center border-l border-white/10" colSpan={3}>Resolution (hh:mm)</th>
+                            <th className="px-6 py-4 text-center border-l border-white/10" colSpan={3}>Resolution (hh:mm:ss)</th>
                         </tr>
                         <tr className="bg-brand-deep/30 text-xs">
                             <th className="px-6 py-2"></th>
@@ -109,7 +109,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                             {isRejected ? <span className="text-gray-600">-</span> : (
                                                 <div className="flex flex-col items-center">
                                                     <span className={`font-mono ${issue.reactionSLAMet ? 'text-green-400' : 'text-red-400 font-bold'}`}>
-                                                        {formatDuration(issue.reactionTime)}
+                                                        {formatDuration(issue.reactionTime, true)}
                                                     </span>
                                                     {!issue.reactionSLAMet && (
                                                         <span className="text-[10px] text-red-400 bg-red-900/20 px-1 rounded mt-1 border border-red-900/50">
@@ -126,7 +126,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                             {isRejected ? <span className="text-gray-600">-</span> : (
                                                 <div className="flex flex-col items-end">
                                                     <span className={issue.resolutionSLAMet ? 'text-green-400' : 'text-red-400 font-bold'}>
-                                                        {formatDuration(issue.resolutionTime)}
+                                                        {formatDuration(issue.resolutionTime, true)}
                                                     </span>
                                                     {!issue.resolutionSLAMet && (
                                                         <span className="text-[10px] text-red-400 bg-red-900/20 px-1 rounded mt-1 border border-red-900/50">
