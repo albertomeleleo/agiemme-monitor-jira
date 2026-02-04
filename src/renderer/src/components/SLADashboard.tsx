@@ -38,6 +38,8 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
     // Jira Fetch Modal
     const [showJiraModal, setShowJiraModal] = useState(false)
+    const [lastJql, setLastJql] = useState<string | null>(null)
+    const [lastMaxResults, setLastMaxResults] = useState<number>(1000)
 
     // Reset selected issue type if it's not valid for current project
     useEffect(() => {
@@ -71,6 +73,8 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
     const storageKey = `sla_csv_content_${currentProject.name}`
     const jiraStorageKey = `sla_jira_data_${currentProject.name}`
+    const lastJqlKey = `sla_last_jql_${currentProject.name}`
+    const lastMaxResultsKey = `sla_last_max_results_${currentProject.name}`
 
     // Load persisted data when project changes
     useEffect(() => {
@@ -79,6 +83,11 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
         const savedJiraData = localStorage.getItem(jiraStorageKey)
         const savedCsvData = localStorage.getItem(storageKey)
+        const savedJql = localStorage.getItem(lastJqlKey)
+        const savedMaxResults = localStorage.getItem(lastMaxResultsKey)
+
+        if (savedJql) setLastJql(savedJql)
+        if (savedMaxResults) setLastMaxResults(Number(savedMaxResults))
 
         if (savedJiraData) {
             setLoading(true)
@@ -154,6 +163,10 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
             // Persist
             try {
                 localStorage.setItem(jiraStorageKey, JSON.stringify(issues))
+                localStorage.setItem(lastJqlKey, jql)
+                localStorage.setItem(lastMaxResultsKey, maxResults.toString())
+                setLastJql(jql)
+                setLastMaxResults(maxResults)
                 localStorage.removeItem(storageKey) // Clear CSV cache
             } catch (e) {
                 console.error('Failed to save to localStorage', e)
@@ -164,6 +177,12 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
             alert(`Jira Fetch Error: ${e.message}`)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleRefresh = async () => {
+        if (lastJql) {
+            await handleJiraFetch(lastJql, lastMaxResults)
         }
     }
 
@@ -340,6 +359,8 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 onIssueTypeChange={setSelectedIssueType}
                 issueTypes={issueTypes}
                 onReset={handleReset}
+                onRefresh={lastJql ? handleRefresh : undefined}
+                isRefreshing={loading}
             />
 
             {

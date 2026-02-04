@@ -81,50 +81,57 @@ export function parseSLA(csvContent: string, config?: ProjectConfig): SLAReport 
 
         // --- Calculate Times ---
 
-        // 1. REACTION TIME
+        const issueBreakdown: Record<string, number> = {}
+
+        // 1. REACTION TIME (Include in breakdown)
         const openTime = parseNumber(cleanCols[colMap.get('Open')!])
         const backlogTime = parseNumber(cleanCols[colMap.get('Backlog')!])
         const reactionMinutes = backlogTime + openTime
+
+        if (openTime > 0.01) issueBreakdown['Open'] = parseFloat(openTime.toFixed(2))
+        if (backlogTime > 0.01) issueBreakdown['Backlog'] = parseFloat(backlogTime.toFixed(2))
 
         // 2. PAUSE TIME
         let waitingTime = 0
         const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
         pauseStatuses.forEach(s => {
             if (colMap.has(s)) {
-                waitingTime += parseNumber(cleanCols[colMap.get(s)!])
+                const val = parseNumber(cleanCols[colMap.get(s)!])
+                if (val > 0.01) {
+                    waitingTime += val
+                    issueBreakdown[s] = parseFloat(val.toFixed(2))
+                }
             }
         })
 
         // 3. RESOLUTION TIME
         let workingTime = 0
-        const workStatuses = ['In Progress', 'Presa in carico', 'Developer Testing', 'READY IN HOTFIX'] // This could also be configurable later
+        const workStatuses = ['In Progress', 'Presa in carico', 'Developer Testing', 'READY IN HOTFIX']
         workStatuses.forEach(s => {
             if (colMap.has(s)) {
-                workingTime += parseNumber(cleanCols[colMap.get(s)!])
+                const val = parseNumber(cleanCols[colMap.get(s)!])
+                if (val > 0.01) {
+                    workingTime += val
+                    issueBreakdown[s] = parseFloat(val.toFixed(2))
+                }
             }
         })
 
         const netResolutionMinutes = workingTime
 
         // Targets (Minutes)
-        // Targets (Minutes)
-        const config = slaConfig as any
-        const targetRes = (config.resolution ? config.resolution[slaTier] : (config.RESOLUTION ? config.RESOLUTION[slaTier] : 40 * 60))
+        const slaConfigAny = slaConfig as any
+        const targetRes = (slaConfigAny.resolution ? slaConfigAny.resolution[slaTier] : (slaConfigAny.RESOLUTION ? slaConfigAny.RESOLUTION[slaTier] : 40 * 60))
 
         // Determine Reaction Target
         let targetReact = 15 // Default
-        if (config.reactionTime !== undefined) {
-            if (typeof config.reactionTime === 'object') {
-                targetReact = config.reactionTime[slaTier] ?? 15
-            } else {
-                targetReact = config.reactionTime
-            }
-        } else if (config.REACTION !== undefined) {
-            targetReact = config.REACTION
+        if (slaConfigAny.reactionTime !== undefined) {
+            targetReact = typeof slaConfigAny.reactionTime === 'object' ? slaConfigAny.reactionTime[slaTier] ?? 15 : slaConfigAny.reactionTime
+        } else if (slaConfigAny.REACTION !== undefined) {
+            targetReact = slaConfigAny.REACTION
         }
 
         // Check Compliance
-        // Use a small epsilon for float comparison safety or ensure proper parsing
         const resolutionMet = netResolutionMinutes <= (targetRes + 0.001)
         const reactionMet = reactionMinutes <= (targetReact + 0.001)
 
@@ -148,14 +155,15 @@ export function parseSLA(csvContent: string, config?: ProjectConfig): SLAReport 
             slaTier,
             created,
             resolutionDate,
-            reactionTime: parseFloat(reactionMinutes.toFixed(2)), // Keep precision
-            resolutionTime: parseFloat(netResolutionMinutes.toFixed(2)), // Keep precision
+            reactionTime: parseFloat(reactionMinutes.toFixed(2)),
+            resolutionTime: parseFloat(netResolutionMinutes.toFixed(2)),
             timeInPause: parseFloat(waitingTime.toFixed(2)),
             timeInWork: parseFloat(netResolutionMinutes.toFixed(2)),
             reactionSLAMet: reactionMet,
             resolutionSLAMet: resolutionMet,
             slaTargetResolution: targetRes,
-            slaTargetReaction: targetReact
+            slaTargetReaction: targetReact,
+            timeBreakdown: issueBreakdown
         }
 
         issues.push(issue)
@@ -223,154 +231,153 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         // Sort history by created asc
         history.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime())
 
-        // 1. Build Transition Timeline
-        const transitions: { time: number, status: string, originalStatus: string }[] = []
-        // Initial state
-        transitions.push({ time: new Date(created).getTime(), status: 'Open', originalStatus: 'Open' })
+        // 1. Build Unified Timeline of State Changes
+        const stateTimeline: { time: number, status: string, dipendenza: string }[] = []
+        let currentStatus = 'Open'
+        let currentDipendenza = ''
 
-        // Specific Anchors requested by user
-        let tBacklog: number | null = null
+        // Initial state
+        stateTimeline.push({ time: new Date(created).getTime(), status: currentStatus, dipendenza: currentDipendenza })
+
+        // Initialize Anchors
+        let tBacklog: number | null = (status === 'Backlog') ? new Date(created).getTime() : null
         let tPresaInCarico: number | null = null
         let tDone: number | null = null
-        let tLinkCause: number | null = null // Fallback for Backlog
+        let tLinkCause: number | null = null
 
-        // Check initial state for Backlog
+        const workStatuses = ['In Progress', 'Presa in carico', 'Developer Testing', 'READY IN HOTFIX']
+
+        // 1. First pass to find tBacklog more precisely if created in Backlog
         const firstStatusChange = history.find((h: any) => h.items.some((i: any) => i.field === 'status'))
         if (firstStatusChange) {
             const item = firstStatusChange.items.find((i: any) => i.field === 'status')
-            if (item && item.fromString === 'Backlog') {
-                tBacklog = new Date(created).getTime()
-            }
-        } else {
-            // No status changes. If current status is Backlog, then it was created in Backlog.
-            if (status === 'Backlog') {
+            if (item && item.fromString === 'Backlog' && !tBacklog) {
                 tBacklog = new Date(created).getTime()
             }
         }
-
 
         for (const h of history) {
-            const item = h.items.find((i: any) => i.field === 'status')
-            if (item) {
-                const ts = new Date(h.created).getTime()
-                const from = item.fromString || ''
-                const to = item.toString || ''
+            const ts = new Date(h.created).getTime()
+            let changed = false
 
-                // Track Transitions
-                transitions.push({
-                    time: ts,
-                    status: to,
-                    originalStatus: from
-                })
+            for (const item of h.items) {
+                if (item.field === 'status') {
+                    currentStatus = item.toString || ''
+                    changed = true
 
-                // Detect Anchors
+                    // Detect Anchors
+                    if (!tBacklog && currentStatus === 'Backlog') tBacklog = ts
 
-                // "data di inserimento nel backlog è quella che ha l'item con toString: Backlog"
-                if (!tBacklog && to === 'Backlog') {
-                    tBacklog = ts
+                    // Priority 1: Exact transition from Backlog to Presa in carico
+                    if (item.fromString === 'Backlog' && currentStatus === 'Presa in carico') {
+                        tPresaInCarico = ts
+                    }
+                    // Priority 2: Any transition TO a work status if tPresaInCarico is not set
+                    else if (!tPresaInCarico && workStatuses.includes(currentStatus)) {
+                        tPresaInCarico = ts
+                    }
+
+                    if (currentStatus === 'Done') tDone = ts
                 }
 
-                // "La data della presa in carico è quella che ha l'item con fromString: Backlog, toString: Presa in carico"
-                if (!tPresaInCarico && from === 'Backlog' && to === 'Presa in carico') {
-                    tPresaInCarico = ts
+                // Dependency Logic: Capture any field that takes "Dipendenza..." values
+                if (item.toString === 'Dipendenza Adesso.it' || item.toString === 'Dipendenza GNV' ||
+                    item.fromString === 'Dipendenza Adesso.it' || item.fromString === 'Dipendenza GNV') {
+                    currentDipendenza = item.toString || ''
+                    changed = true
                 }
 
-                // "La data della chiusura è quella che ha l'item con toString: Done"
-                if (to === 'Done') {
-                    tDone = ts // Use latest Done? By default overwrite
+                // Fallback for Backlog anchor
+                if (!tLinkCause && item.toString && item.toString.startsWith('This work item causes ')) {
+                    tLinkCause = ts
                 }
             }
 
-            // Fallback Check for "This work item causes..."
-            // This might not be a 'status' field, so iterate ALL items
-            if (!tLinkCause) {
-                const causeItem = h.items.find((i: any) => i.toString && i.toString.startsWith('This work item causes '))
-                if (causeItem) {
-                    tLinkCause = new Date(h.created).getTime()
-                }
+            if (changed) {
+                stateTimeline.push({ time: ts, status: currentStatus, dipendenza: currentDipendenza })
             }
         }
 
-        // Apply Fallback for Backlog
-        if (!tBacklog && tLinkCause) {
-            tBacklog = tLinkCause
-        }
+        if (!tBacklog && tLinkCause) tBacklog = tLinkCause
 
         // Apply Logic if Anchors exist
         let calculatedReaction = 0
         let calculatedResolution = 0
         let calculatedPause = 0
+        let issueBreakdown: Record<string, number> = {}
 
-        // Determine if 24x7 or Business Hours
-        // "Solo per le issue Expedite, deve essere considerato il tempo effettivo se create dal 01/02/2026"
         const effectiveCreated = tBacklog ? new Date(tBacklog) : new Date(created)
         const isExpedite = slaTier === 'Expedite' || priority.toLowerCase() === 'highest' || priority.toLowerCase() === 'critical'
-
-        const thresholdDate = new Date(2026, 1, 1) // 1st Feb 2026
-        const isPostFeb2026 = effectiveCreated.getTime() >= thresholdDate.getTime()
-
+        const isPostFeb2026 = effectiveCreated.getTime() >= new Date(2026, 1, 1).getTime()
         const is24x7 = isExpedite && isPostFeb2026
 
         const calcDuration = (start: number, end: number): number => {
-            if (is24x7) {
-                return Math.max(0, (end - start) / (1000 * 60))
-            } else {
-                return calculateBusinessMinutes(new Date(start), new Date(end))
+            if (is24x7) return Math.max(0, (end - start) / (1000 * 60))
+            return calculateBusinessMinutes(new Date(start), new Date(end))
+        }
+
+        // --- UNIVERSAL BREAKDOWN & CALCULATION ---
+        const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
+        const pauseDependencies = ['Dipendenza Adesso.it', 'Dipendenza GNV']
+
+        const breakdown: Record<string, number> = {}
+        const endTimeline = (tDone || Date.now())
+
+        for (let i = 0; i < stateTimeline.length; i++) {
+            const state = stateTimeline[i]
+            const nextTime = (i < stateTimeline.length - 1) ? stateTimeline[i + 1].time : Date.now()
+
+            // Calculate duration for this segment in the timeline
+            const segmentStart = state.time
+            const segmentEnd = Math.min(nextTime, endTimeline)
+
+            if (segmentEnd > segmentStart) {
+                const duration = calcDuration(segmentStart, segmentEnd)
+                const isDipendenzaPaused = pauseDependencies.some(pd => pd === state.dipendenza)
+
+                // Track everything in breakdown
+                const label = isDipendenzaPaused ? state.dipendenza : state.status
+                breakdown[label] = (breakdown[label] || 0) + duration
+
+                // Track total pauses for Resolution Net Time calculation (only if AFTER tPresaInCarico)
+                if (tPresaInCarico && segmentEnd > tPresaInCarico) {
+                    const activeStart = Math.max(segmentStart, tPresaInCarico)
+                    const activeEnd = segmentEnd
+
+                    if (activeEnd > activeStart) {
+                        const isStatusPaused = pauseStatuses.some(ps => ps.toLowerCase() === state.status.toLowerCase())
+                        if (isStatusPaused || isDipendenzaPaused) {
+                            calculatedPause += calcDuration(activeStart, activeEnd)
+                        }
+                    }
+                }
             }
         }
 
         // --- Reaction Time ---
-        // Backlog -> Presa in carico
-        if (tBacklog && tPresaInCarico) {
-            calculatedReaction = calcDuration(tBacklog, tPresaInCarico)
+        if (tBacklog) {
+            const endReact = tPresaInCarico || Date.now()
+            calculatedReaction = calcDuration(tBacklog, endReact)
             reactionMinutes = calculatedReaction
-        } else {
-            if (tBacklog && !tPresaInCarico) {
-                // Pending Reaction
-                const now = Date.now()
-                reactionMinutes = calcDuration(tBacklog, now) // Show current waiting time
-            } else {
-                // Completely fallback (no anchors found)
-                // Use generic sum if we want, or just 0
-            }
         }
 
         // --- Resolution Time ---
-        // Presa in carico -> Done
         if (tPresaInCarico) {
             const endWork = tDone || Date.now()
-
-            // Gross Working Time
             const grossDuration = calcDuration(tPresaInCarico, endWork)
-
-            // Calculate Pauses overlap
-            let totalPauseDuration = 0
-            const pauseStatuses = ['Waiting for support', 'Waiting for Support (II° Level)-10104', 'In pausa', 'Sospeso', 'Pausa']
-
-            for (let i = 0; i < transitions.length; i++) {
-                const tran = transitions[i]
-                const nextTranTime = (i < transitions.length - 1) ? transitions[i + 1].time : Date.now()
-
-                // Interval [tran.time, nextTranTime]
-                const start = Math.max(tran.time, tPresaInCarico)
-                const end = Math.min(nextTranTime, endWork)
-
-                if (end > start) {
-                    if (pauseStatuses.some(ps => ps.toLowerCase() === tran.status.toLowerCase())) {
-                        totalPauseDuration += calcDuration(start, end)
-                    }
-                }
-            }
-
-            calculatedResolution = Math.max(0, grossDuration - totalPauseDuration)
-            calculatedPause = totalPauseDuration
+            calculatedResolution = Math.max(0, grossDuration - calculatedPause)
 
             workingTime = calculatedResolution
             waitingTime = calculatedPause
-
-        } else {
-            // Fallback
         }
+
+        // Collect non-zero breakdown items
+        issueBreakdown = Object.fromEntries(
+            Object.entries(breakdown)
+                .filter(([_, val]) => val > 0.01)
+                .map(([key, val]) => [key, parseFloat(val.toFixed(2))])
+        )
+
 
         // Targets
         const configAny = slaConfig as any
@@ -405,6 +412,7 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
             resolutionSLAMet: resolutionMet,
             slaTargetResolution: targetRes,
             slaTargetReaction: targetReact,
+            timeBreakdown: issueBreakdown,
 
             changelog: history.map((h: any) => ({
                 author: h.author?.displayName || 'Unknown',

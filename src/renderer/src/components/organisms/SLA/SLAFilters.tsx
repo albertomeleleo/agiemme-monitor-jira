@@ -18,6 +18,8 @@ interface SLAFiltersProps {
     onIssueTypeChange: (type: string) => void
     issueTypes: { raw: string, label: string }[]
     onReset: () => void
+    onRefresh?: () => void
+    isRefreshing?: boolean
 }
 
 export function SLAFilters({
@@ -37,7 +39,9 @@ export function SLAFilters({
     selectedIssueType,
     onIssueTypeChange,
     issueTypes,
-    onReset
+    onReset,
+    onRefresh,
+    isRefreshing
 }: SLAFiltersProps): JSX.Element {
 
     return (
@@ -126,7 +130,17 @@ export function SLAFilters({
                 ))}
             </div>
 
-            <div className="ml-4 border-l border-gray-700 pl-4">
+            <div className="ml-4 border-l border-gray-700 pl-4 flex items-center gap-2">
+                {onRefresh && (
+                    <button
+                        onClick={onRefresh}
+                        disabled={isRefreshing}
+                        className={`flex items-center gap-2 text-xs text-brand-cyan hover:text-white font-medium border border-brand-cyan/30 px-3 py-1.5 rounded-lg hover:bg-brand-cyan/20 transition-all ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        <span className={`${isRefreshing ? 'animate-spin' : ''}`}>🔄</span>
+                        {isRefreshing ? 'Refreshing...' : 'Sync Jira'}
+                    </button>
+                )}
                 <button
                     onClick={onReset}
                     className="flex items-center gap-2 text-xs text-red-400 hover:text-red-300 font-medium border border-red-900/50 px-3 py-1.5 rounded-lg hover:bg-red-900/20 transition-colors"

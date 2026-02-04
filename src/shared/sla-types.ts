@@ -32,6 +32,7 @@ export interface SLAIssue {
             toString: string | null;
         }>;
     }>;
+    timeBreakdown?: Record<string, number>;
 }
 
 export interface SLAReport {

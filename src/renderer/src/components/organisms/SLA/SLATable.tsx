@@ -149,33 +149,48 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                     {isExpanded && (
                                         <tr className="bg-black/20 animate-in fade-in slide-in-from-top-2 duration-200">
                                             <td colSpan={10} className="p-0 border-b border-white/10">
-                                                <div className="p-4 pl-16 space-y-2 max-h-96 overflow-y-auto">
-                                                    <Typography variant="caption" className="font-bold text-gray-400 uppercase tracking-wider mb-2 block">Changelog History</Typography>
-                                                    <div className="space-y-3">
-                                                        {issue.changelog?.map((entry, idx) => (
-                                                            <div key={idx} className="text-xs bg-white/5 p-3 rounded border border-white/5 relative">
-                                                                <div className="flex justify-between items-start mb-2 border-b border-white/5 pb-1">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="font-bold text-brand-cyan">{entry.author}</span>
-                                                                        <span className="text-gray-500 text-[10px]">
-                                                                            {new Date(entry.created).toLocaleString()}
-                                                                        </span>
+                                                <div className="p-4 pl-16 space-y-4 max-h-96 overflow-y-auto">
+                                                    {issue.timeBreakdown && Object.keys(issue.timeBreakdown).length > 0 && (
+                                                        <div className="space-y-2 pb-4 border-b border-white/5">
+                                                            <Typography variant="caption" className="font-bold text-gray-400 uppercase tracking-wider block">Resolution Breakdown (Net Time)</Typography>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {Object.entries(issue.timeBreakdown).map(([key, val]) => (
+                                                                    <div key={key} className="bg-brand-deep/50 px-3 py-1.5 rounded-lg border border-white/10 text-[11px] flex items-center gap-2">
+                                                                        <span className="text-gray-400">{key}</span>
+                                                                        <span className="text-brand-cyan font-mono font-bold">{formatDuration(val)}</span>
                                                                     </div>
-                                                                </div>
-                                                                <div className="space-y-1 pl-2">
-                                                                    {entry.items.map((item, i) => (
-                                                                        <div key={i} className="grid grid-cols-[100px_1fr] gap-2">
-                                                                            <span className="text-gray-400 italic">{item.field}:</span>
-                                                                            <span className="text-gray-300">
-                                                                                <span className="line-through text-red-400/70 mr-2">{item.fromString || '(empty)'}</span>
-                                                                                <span className="text-gray-500">→</span>
-                                                                                <span className="text-green-400 ml-2">{item.toString || '(empty)'}</span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <Typography variant="caption" className="font-bold text-gray-400 uppercase tracking-wider mb-2 block">Changelog History</Typography>
+                                                        <div className="space-y-3">
+                                                            {issue.changelog?.map((entry, idx) => (
+                                                                <div key={idx} className="text-xs bg-white/5 p-3 rounded border border-white/5 relative">
+                                                                    <div className="flex justify-between items-start mb-2 border-b border-white/5 pb-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="font-bold text-brand-cyan">{entry.author}</span>
+                                                                            <span className="text-gray-500 text-[10px]">
+                                                                                {new Date(entry.created).toLocaleString()}
                                                                             </span>
                                                                         </div>
-                                                                    ))}
+                                                                    </div>
+                                                                    <div className="space-y-1 pl-2">
+                                                                        {entry.items.map((item, i) => (
+                                                                            <div key={i} className="grid grid-cols-[100px_1fr] gap-2">
+                                                                                <span className="text-gray-400 italic">{item.field}:</span>
+                                                                                <span className="text-gray-300">
+                                                                                    <span className="line-through text-red-400/70 mr-2">{item.fromString || '(empty)'}</span>
+                                                                                    <span className="text-gray-500">→</span>
+                                                                                    <span className="text-green-400 ml-2">{item.toString || '(empty)'}</span>
+                                                                                </span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
