@@ -42,7 +42,7 @@ export function SLAFilters({
 
     return (
         <div className={`flex flex-wrap gap-4 items-center p-4 transition-all duration-300 sticky top-0 z-20 ${isSticky
-            ? 'bg-brand-deep/95 backdrop-blur-md border-b-2 border-brand-cyan shadow-2xl shadow-brand-cyan/20 rounded-b-xl mx-0'
+            ? 'bg-brand-deep/95 backdrop-blur-md border-b-2 border-brand-cyan rounded-b-xl mx-0'
             : 'glass-panel rounded-xl mx-0 border border-white/10'
             }`}>
             <Typography variant="mono" className="text-gray-400 font-bold text-xs uppercase">Filter By:</Typography>
@@ -74,7 +74,7 @@ export function SLAFilters({
             <div className="flex bg-brand-deep/50 rounded-lg p-1 border border-white/10">
                 <button
                     onClick={() => onFilterModeChange('all')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${filterMode === 'all' ? 'bg-brand-cyan text-brand-deep shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${filterMode === 'all' ? 'bg-brand-cyan text-brand-deep shadow-lg ' : 'text-brand-text-sec hover:text-white'}`}
                 >
                     All Issues
                 </button>
@@ -102,13 +102,13 @@ export function SLAFilters({
             <div className="flex space-x-1 glass-panel p-1 rounded-lg w-fit border border-white/10">
                 <button
                     onClick={() => onTabChange('overview')}
-                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'overview' ? 'bg-brand-cyan text-brand-deep shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
+                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'overview' ? 'bg-brand-cyan text-brand-deep shadow-lg ' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
                 >
                     📊 Overview
                 </button>
                 <button
                     onClick={() => onTabChange('issues')}
-                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'issues' ? 'bg-brand-cyan text-brand-deep shadow-lg shadow-brand-cyan/20' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
+                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'issues' ? 'bg-brand-cyan text-brand-deep shadow-lg' : 'text-brand-text-sec hover:text-white hover:bg-brand-card'}`}
                 >
                     📋 Issue List
                 </button>

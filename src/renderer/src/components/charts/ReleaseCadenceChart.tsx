@@ -54,7 +54,7 @@ export function ReleaseCadenceChart({ releases }: ChartProps): JSX.Element {
                             key={tf}
                             onClick={() => setTimeframe(tf)}
                             className={`px-3 py-1 text-xs font-medium rounded capitalize transition-all ${timeframe === tf
-                                ? 'bg-brand-cyan text-brand-deep font-bold shadow-lg shadow-brand-cyan/20'
+                                ? 'bg-brand-cyan text-brand-deep font-bold shadow-lg '
                                 : 'text-brand-text-sec hover:text-white hover:bg-brand-card/50'
                                 }`}
                         >
