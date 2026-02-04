@@ -1,6 +1,6 @@
 import { SLAIssue } from '../../../../../shared/sla-types'
 import { Modal, Typography, Card, Badge } from '@design-system'
-import { formatDuration } from './utils'
+import { formatDuration, parseDate } from './utils'
 
 interface IssueDetailModalProps {
     issue: SLAIssue
@@ -9,6 +9,9 @@ interface IssueDetailModalProps {
 
 export function IssueDetailModal({ issue, onClose }: IssueDetailModalProps): JSX.Element {
     const isRejected = issue.status.toLowerCase() === 'rejected'
+
+    const createdDate = parseDate(issue.created)
+    const formattedCreated = createdDate ? createdDate.toLocaleDateString() : issue.created
 
     return (
         <Modal
@@ -30,7 +33,7 @@ export function IssueDetailModal({ issue, onClose }: IssueDetailModalProps): JSX
                     </Card>
                     <Card variant="glass" className="!p-4 bg-brand-deep/50">
                         <Typography variant="caption" className="uppercase font-bold">Created</Typography>
-                        <div className="text-white font-medium mt-1">{issue.created.split('T')[0]}</div>
+                        <div className="text-white font-medium mt-1">{formattedCreated}</div>
                     </Card>
                 </div>
 

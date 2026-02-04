@@ -9,7 +9,7 @@ import { SLALegend } from './organisms/SLA/SLALegend'
 import { SLACharts } from './organisms/SLA/SLACharts'
 import { JiraFetchModal } from './organisms/SLA/JiraFetchModal'
 import { IssueDetailModal } from './organisms/SLA/IssueDetailModal'
-import { Card, Typography } from '@design-system'
+import { Card, Typography, Button } from '@design-system'
 
 interface SLADashboardProps {
     currentProject: Project
@@ -233,7 +233,26 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
                         <div className="text-6xl mb-6 grayscale group-hover:grayscale-0 transition-all scale-90 group-hover:scale-100 duration-300">⚡</div>
                         <Typography variant="h3" className="text-white mb-2">Fetch from Jira</Typography>
-                        <Typography variant="body" className="text-gray-400 max-w-xs">Connect directly to Jira Cloud to analyze real-time data.</Typography>
+                        <Typography variant="body" className="text-gray-400 max-w-xs mb-4">Connect directly to Jira Cloud to analyze real-time data.</Typography>
+
+                        {lastJql && !loading && (
+                            <div className="mt-4 pt-4 border-t border-white/10 w-full animate-in fade-in slide-in-from-top-2 duration-500">
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    className="w-full gap-2 shadow-lg shadow-brand-cyan/20 px-6"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleRefresh()
+                                    }}
+                                >
+                                    <span>🔄</span> Quick Sync Last Query
+                                </Button>
+                                <Typography variant="caption" className="text-gray-500 mt-2 block truncate px-2 italic">
+                                    {lastJql}
+                                </Typography>
+                            </div>
+                        )}
                     </Card>
                 </div>
 
