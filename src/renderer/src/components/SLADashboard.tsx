@@ -70,18 +70,37 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
     }, [])
 
     const storageKey = `sla_csv_content_${currentProject.name}`
+    const jiraStorageKey = `sla_jira_data_${currentProject.name}`
 
     // Load persisted data when project changes
     useEffect(() => {
         setReport(null)
         setSelectedMonth(new Date().toLocaleString('default', { month: 'long', year: 'numeric' }))
-        const savedData = localStorage.getItem(storageKey)
-        if (savedData) {
+
+        const savedJiraData = localStorage.getItem(jiraStorageKey)
+        const savedCsvData = localStorage.getItem(storageKey)
+
+        if (savedJiraData) {
             setLoading(true)
-            // Decide if savedData is CSV or JSON (Jira API cache)
-            // For now assuming CSV for legacy compat, maybe we differentiate later.
-            // Or we try parseSLA first.
-            window.api.parseSLA(savedData, currentProject.config)
+            try {
+                const issues = JSON.parse(savedJiraData)
+                window.api.jiraParseApiIssues(issues, currentProject.config)
+                    .then(result => {
+                        setReport(result)
+                        // Restore selected month if possible? Defaulting to current for now
+                    })
+                    .catch(err => {
+                        console.error('Failed to load persisted Jira data', err)
+                        localStorage.removeItem(jiraStorageKey)
+                    })
+                    .finally(() => setLoading(false))
+            } catch (e) {
+                console.error('Failed to parse saved Jira data', e)
+                setLoading(false)
+            }
+        } else if (savedCsvData) {
+            setLoading(true)
+            window.api.parseSLA(savedCsvData, currentProject.config)
                 .then(result => setReport(result))
                 .catch(err => {
                     console.error('Failed to load persisted data', err)
@@ -99,6 +118,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         try {
             const text = await file.text()
             localStorage.setItem(storageKey, text) // Persist per project
+            localStorage.removeItem(jiraStorageKey) // Clear Jira cache
             // Pass config to parser
             const result = await window.api.parseSLA(text, currentProject.config)
             setReport(result)
@@ -131,11 +151,13 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
             setReport(result)
             setSelectedMonth(new Date().toLocaleString('default', { month: 'long', year: 'numeric' }))
 
-            // We don't persist JSON to localStorage key used for CSV to avoid format conflicts
-            // Or we could json stringify it.
-            // localStorage.setItem(storageKey, JSON.stringify(issues)) 
-            // Reuse storage key? parseSLA currently expects CSV string.
-            // FUTURE: Unify storage or use different key.
+            // Persist
+            try {
+                localStorage.setItem(jiraStorageKey, JSON.stringify(issues))
+                localStorage.removeItem(storageKey) // Clear CSV cache
+            } catch (e) {
+                console.error('Failed to save to localStorage', e)
+            }
 
         } catch (e: any) {
             console.error(e)
