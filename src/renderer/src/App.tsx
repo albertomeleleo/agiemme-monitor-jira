@@ -7,6 +7,8 @@ import { ReleaseDetail } from './components/ReleaseDetail'
 import { SLADashboard } from './components/SLADashboard'
 import { ProjectSettingsModal } from './components/ProjectSettingsModal'
 import { HelpPage } from './components/HelpPage'
+import { OpenIssuesDashboard } from './components/OpenIssuesDashboard'
+import { TaskTrackerDashboard } from './components/TaskTrackerDashboard'
 
 
 import { ReleaseCard } from './components/ReleaseCard'
@@ -27,7 +29,7 @@ function AppContent(): JSX.Element {
     const [releases, setReleases] = useState<ReleaseData[]>([])
     const [loading, setLoading] = useState(false)
     const [viewMode, setViewMode] = useState<ViewMode>('cards')
-    const [projectView, setProjectView] = useState<'releases' | 'sla' | 'help'>('releases')
+    const [projectView, setProjectView] = useState<'releases' | 'sla' | 'help' | 'open-issues' | 'task-tracker'>('releases')
 
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedRelease, setSelectedRelease] = useState<ReleaseData | null>(null)
@@ -157,7 +159,7 @@ function AppContent(): JSX.Element {
                     onRefresh={() => { }}
                     onSelectProject={(p) => {
                         setCurrentProject(p)
-                        if (projectView === 'help' || p.name !== currentProject?.name) {
+                        if (projectView === 'help' || projectView === 'open-issues' || projectView === 'task-tracker' || p.name !== currentProject?.name) {
                             setProjectView('releases')
                         }
                     }}
@@ -170,6 +172,10 @@ function AppContent(): JSX.Element {
 
                     {projectView === 'help' ? (
                         <HelpPage />
+                    ) : projectView === 'open-issues' && currentProject ? (
+                        <OpenIssuesDashboard currentProject={currentProject} />
+                    ) : projectView === 'task-tracker' && currentProject ? (
+                        <TaskTrackerDashboard currentProject={currentProject} />
                     ) : currentProject ? (
                         <>
                             {/* HEADER */}
@@ -209,7 +215,7 @@ function AppContent(): JSX.Element {
                                 </div>
 
                                 <div className="flex items-center gap-4">
-                                    <ThemeToggle />
+
                                     {/* Stats & Upload (Visible only in Releases view) */}
                                     {projectView === 'releases' && (
                                         <div className="flex gap-4 items-center flex-wrap">
@@ -230,6 +236,7 @@ function AppContent(): JSX.Element {
                                             </Card>
                                         </div>
                                     )}
+                                    <ThemeToggle />
                                 </div>
                             </header>
 

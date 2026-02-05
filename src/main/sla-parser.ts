@@ -211,7 +211,8 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
 
         // Check Type
         const issueType = fields.issuetype?.name || 'Task'
-        if (!allowedRawTypes.has(issueType.toLowerCase())) continue
+        // Always allow 'Task' or types in the allowed list
+        if (issueType.toLowerCase() !== 'task' && !allowedRawTypes.has(issueType.toLowerCase())) continue
 
         const key = issue.key
         const priority = fields.priority?.name || 'Medium'
@@ -408,16 +409,23 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
 
         // Targets
         const configAny = slaConfig as any
-        const targetRes = (configAny.resolution ? configAny.resolution[slaTier] : (configAny.RESOLUTION ? configAny.RESOLUTION[slaTier] : 40 * 60))
+        let targetRes = (configAny.resolution ? configAny.resolution[slaTier] : (configAny.RESOLUTION ? configAny.RESOLUTION[slaTier] : 40 * 60))
         let targetReact = 15
-        if (configAny.reactionTime !== undefined) {
-            targetReact = typeof configAny.reactionTime === 'object' ? configAny.reactionTime[slaTier] ?? 15 : configAny.reactionTime
-        } else if (configAny.REACTION !== undefined) {
-            targetReact = configAny.REACTION
+
+        // Special Rule for ONLY Task types
+        if (issueType === 'Task') {
+            targetRes = 15 * (BUSINESS_END_HOUR - BUSINESS_START_HOUR) * 60 // 15 business days
+            targetReact = 999999 // Effectively no reaction SLA
+        } else {
+            if (configAny.reactionTime !== undefined) {
+                targetReact = typeof configAny.reactionTime === 'object' ? configAny.reactionTime[slaTier] ?? 15 : configAny.reactionTime
+            } else if (configAny.REACTION !== undefined) {
+                targetReact = configAny.REACTION
+            }
         }
 
         const resolutionMet = workingTime <= (targetRes + 0.001)
-        const reactionMet = reactionMinutes <= (targetReact + 0.001)
+        const reactionMet = issueType === 'Task' ? true : (reactionMinutes <= (targetReact + 0.001))
 
         // --- Active Issue Projections ---
         let projectedReactionBreach: string | undefined

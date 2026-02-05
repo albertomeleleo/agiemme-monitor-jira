@@ -25,7 +25,6 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
     const [report, setReport] = useState<SLAReport | null>(null)
     const [loading, setLoading] = useState(false)
-    const fileInputRef = useRef<HTMLInputElement>(null)
     const [filterMode, setFilterMode] = useState<'all' | 'failed'>('all')
     const [excludeRejected, setExcludeRejected] = useState(false)
     const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toLocaleString('default', { month: 'long', year: 'numeric' }))
@@ -72,7 +71,6 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         }
     }, [])
 
-    const storageKey = `sla_csv_content_${currentProject.name}`
     const jiraStorageKey = `sla_jira_data_${currentProject.name}`
     const lastJqlKey = `sla_last_jql_${currentProject.name}`
     const lastMaxResultsKey = `sla_last_max_results_${currentProject.name}`
@@ -83,7 +81,6 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         setSelectedMonth(new Date().toLocaleString('default', { month: 'long', year: 'numeric' }))
 
         const savedJiraData = localStorage.getItem(jiraStorageKey)
-        const savedCsvData = localStorage.getItem(storageKey)
         const savedJql = localStorage.getItem(lastJqlKey)
         const savedMaxResults = localStorage.getItem(lastMaxResultsKey)
 
@@ -97,7 +94,6 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 window.api.jiraParseApiIssues(issues, currentProject.config)
                     .then(result => {
                         setReport(result)
-                        // Restore selected month if possible? Defaulting to current for now
                     })
                     .catch(err => {
                         console.error('Failed to load persisted Jira data', err)
@@ -108,38 +104,9 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 console.error('Failed to parse saved Jira data', e)
                 setLoading(false)
             }
-        } else if (savedCsvData) {
-            setLoading(true)
-            window.api.parseSLA(savedCsvData, currentProject.config)
-                .then(result => setReport(result))
-                .catch(err => {
-                    console.error('Failed to load persisted data', err)
-                    localStorage.removeItem(storageKey)
-                })
-                .finally(() => setLoading(false))
         }
     }, [currentProject])
 
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0]
-        if (!file) return
-
-        setLoading(true)
-        try {
-            const text = await file.text()
-            localStorage.setItem(storageKey, text) // Persist per project
-            localStorage.removeItem(jiraStorageKey) // Clear Jira cache
-            // Pass config to parser
-            const result = await window.api.parseSLA(text, currentProject.config)
-            setReport(result)
-            setSelectedMonth(new Date().toLocaleString('default', { month: 'long', year: 'numeric' }))
-        } catch (error) {
-            console.error(error)
-            alert('Failed to parse CSV')
-        } finally {
-            setLoading(false)
-        }
-    }
 
     const handleJiraFetch = async (jql: string, maxResults: number) => {
         setLoading(true)
@@ -168,7 +135,6 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 localStorage.setItem(lastMaxResultsKey, maxResults.toString())
                 setLastJql(jql)
                 setLastMaxResults(maxResults)
-                localStorage.removeItem(storageKey) // Clear CSV cache
             } catch (e) {
                 console.error('Failed to save to localStorage', e)
             }
@@ -189,7 +155,6 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
     const handleReset = () => {
         setReport(null)
-        localStorage.removeItem(storageKey)
         setSelectedIssue(null)
         setHoveredIssue(null)
     }
@@ -252,52 +217,39 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
     if (!report && !loading) {
         return (
-            <div className="flex flex-col gap-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
-                        onClick={() => fileInputRef.current?.click()}
-                    >
+            <div className="flex flex-col gap-8 items-center justify-center p-12 min-h-[60vh]">
+                <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group w-full max-w-xl relative overflow-hidden shadow-2xl"
+                    onClick={() => setShowJiraModal(true)}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-cyan/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept=".csv"
-                            onChange={handleFileUpload}
-                        />
-                        <div className="text-6xl mb-6 grayscale group-hover:grayscale-0 transition-all scale-90 group-hover:scale-100 duration-300">📊</div>
-                        <Typography variant="h3" className="text-brand-text-pri mb-2">Upload CSV</Typography>
-                        <Typography variant="body" className="text-brand-text-sec max-w-xs">Drop your Jira CSV export here manually.</Typography>
-                    </Card>
+                    <div className="text-8xl mb-6 grayscale group-hover:grayscale-0 transition-all scale-90 group-hover:scale-100 duration-500">⚡</div>
+                    <Typography variant="h2" className="text-brand-text-pri mb-4">Fetch from Jira</Typography>
+                    <Typography variant="body" className="text-brand-text-sec max-w-md mb-8 text-lg">
+                        Connect directly to Jira Cloud to analyze real-time SLA data for this project.
+                    </Typography>
 
-                    <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
-                        onClick={() => setShowJiraModal(true)}
-                    >
-
-                        <div className="text-6xl mb-6 grayscale group-hover:grayscale-0 transition-all scale-90 group-hover:scale-100 duration-300">⚡</div>
-                        <Typography variant="h3" className="text-brand-text-pri mb-2">Fetch from Jira</Typography>
-                        <Typography variant="body" className="text-brand-text-sec max-w-xs mb-4">Connect directly to Jira Cloud to analyze real-time data.</Typography>
-
-                        {lastJql && !loading && (
-                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10 w-full animate-in fade-in slide-in-from-top-2 duration-500">
-                                <Button
-                                    variant="primary"
-                                    size="sm"
-                                    className="w-full gap-2 shadow-lg shadow-brand-cyan/20 px-6"
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleRefresh()
-                                    }}
-                                >
-                                    <span>🔄</span> Quick Sync Last Query
-                                </Button>
-                                <Typography variant="caption" className="text-gray-500 mt-2 block truncate px-2 italic">
+                    {lastJql && !loading && (
+                        <div className="mt-4 pt-6 border-t border-gray-200 dark:border-white/10 w-full animate-in fade-in slide-in-from-top-4 duration-700">
+                            <Button
+                                variant="primary"
+                                size="lg"
+                                className="w-full gap-3 shadow-xl shadow-brand-cyan/20 px-8 py-6 text-lg hover:scale-[1.02] active:scale-95 transition-all"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleRefresh()
+                                }}
+                            >
+                                <span>🔄</span> Sync Latest Query
+                            </Button>
+                            <div className="mt-4 p-3 bg-black/20 rounded-lg border border-white/5">
+                                <Typography variant="caption" className="text-gray-500 block truncate italic font-mono">
                                     {lastJql}
                                 </Typography>
                             </div>
-                        )}
-                    </Card>
-                </div>
+                        </div>
+                    )}
+                </Card>
 
                 {showJiraModal && (
                     <JiraFetchModal

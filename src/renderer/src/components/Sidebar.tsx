@@ -9,8 +9,8 @@ interface SidebarProps {
     onSelectProject: (project: Project) => void
     onCreateProject: (name: string) => void
     onRefresh: () => void
-    currentView?: 'releases' | 'sla' | 'help'
-    onSelectView?: (view: 'releases' | 'sla' | 'help') => void
+    currentView?: 'releases' | 'sla' | 'help' | 'open-issues' | 'task-tracker'
+    onSelectView?: (view: 'releases' | 'sla' | 'help' | 'open-issues' | 'task-tracker') => void
 }
 
 export function Sidebar({ projects, currentProject, onSelectProject, onCreateProject, currentView = 'releases', onSelectView }: SidebarProps): JSX.Element {
@@ -59,6 +59,26 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                         {currentProject?.name === project.name && (
                             <div className="ml-4 mt-1 pl-4 border-l border-gray-200 dark:border-white/10 space-y-1 animate-in slide-in-from-left-2 duration-200">
                                 <button
+                                    onClick={() => onSelectView?.('open-issues')}
+                                    aria-current={currentView === 'open-issues' ? 'location' : undefined}
+                                    className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'open-issues'
+                                        ? 'text-brand-cyan bg-brand-cyan/10'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-brand-text-pri hover:bg-gray-100 dark:hover:bg-white/5'
+                                        }`}
+                                >
+                                    <span>🔥</span> Open Issues
+                                </button>
+                                <button
+                                    onClick={() => onSelectView?.('task-tracker')}
+                                    aria-current={currentView === 'task-tracker' ? 'location' : undefined}
+                                    className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'task-tracker'
+                                        ? 'text-brand-cyan bg-brand-cyan/10'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-brand-text-pri hover:bg-gray-100 dark:hover:bg-white/5'
+                                        }`}
+                                >
+                                    <span>📅</span> Task Tracker
+                                </button>
+                                <button
                                     onClick={() => onSelectView?.('releases')}
                                     aria-current={currentView === 'releases' ? 'location' : undefined}
                                     className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'releases'
@@ -78,6 +98,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                                 >
                                     <span>⏱️</span> SLA Dashboard
                                 </button>
+
 
                             </div>
                         )}

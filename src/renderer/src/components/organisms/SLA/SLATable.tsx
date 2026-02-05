@@ -25,11 +25,12 @@ interface SLATableProps {
     issues: SLAIssue[]
     onSelectIssue: (issue: SLAIssue) => void
     onHoverIssue: (issue: SLAIssue | null, x: number, y: number) => void
+    hideReaction?: boolean
 }
 
 const PAGE_SIZE = 30
 
-export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps): JSX.Element {
+export function SLATable({ issues, onSelectIssue, onHoverIssue, hideReaction = false }: SLATableProps): JSX.Element {
     const [expandedIssues, setExpandedIssues] = useState<Set<string>>(new Set())
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
     const observerTarget = useRef<HTMLDivElement>(null)
@@ -92,7 +93,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                             <th className="px-6 py-4" scope="col">Key</th>
                             <th className="px-6 py-4" scope="col">Priority</th>
                             <th className="px-6 py-4" scope="col">Status</th>
-                            <th className="px-6 py-4 text-center border-l border-white/10" colSpan={2} scope="col">Reaction</th>
+                            {!hideReaction && <th className="px-6 py-4 text-center border-l border-white/10" colSpan={2} scope="col">Reaction</th>}
                             <th className="px-6 py-4 text-center border-l border-white/10" colSpan={4} scope="col">Resolution</th>
                         </tr>
                         <tr className="bg-brand-deep/30 text-[10px] text-gray-400 sticky top-[52px] z-10 backdrop-blur-md">
@@ -102,11 +103,15 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                             <th className="px-6 py-2" scope="col"></th>
 
                             {/* Reaction */}
-                            <th className="px-6 py-2 text-center border-l border-white/10" scope="col">Actual</th>
-                            <th className="px-6 py-2 text-center" scope="col">Due</th>
+                            {!hideReaction && (
+                                <>
+                                    <th className="px-6 py-2 text-center border-l border-white/10" scope="col">Actual</th>
+                                    <th className="px-6 py-2 text-center" scope="col">Due</th>
+                                </>
+                            )}
 
                             {/* Resolution */}
-                            <th className="px-6 py-2 text-right border-l border-white/10" scope="col">Target</th>
+                            <th className={`px-6 py-2 text-right ${!hideReaction ? 'border-l' : ''} border-white/10`} scope="col">Target</th>
                             <th className="px-6 py-2 text-right" scope="col">Actual</th>
                             <th className="px-6 py-2 text-right" scope="col">Due</th>
                             <th className="px-6 py-2 text-right" scope="col">Paused</th>
@@ -169,29 +174,33 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                         </td>
 
                                         {/* Reaction Time */}
-                                        <td className="px-6 py-4 text-center border-l border-gray-700">
-                                            {isRejected ? <span className="text-gray-600">-</span> : (
-                                                <div className="flex flex-col items-center">
-                                                    <span className={`font-mono ${issue.reactionSLAMet ? 'text-green-400' : 'text-red-400 font-bold'}`}>
-                                                        {formatDuration(issue.reactionTime, true)}
-                                                    </span>
-                                                    {!issue.reactionSLAMet && !issue.projectedReactionBreach && (
-                                                        // Only show FAILED if no projection (meaning it's done and failed)
-                                                        <span className="text-[10px] text-red-400 bg-red-900/20 px-1 rounded mt-1 border border-red-900/50">
-                                                            FAILED
-                                                        </span>
+                                        {!hideReaction && (
+                                            <>
+                                                <td className="px-6 py-4 text-center border-l border-gray-700">
+                                                    {isRejected ? <span className="text-gray-600">-</span> : (
+                                                        <div className="flex flex-col items-center">
+                                                            <span className={`font-mono ${issue.reactionSLAMet ? 'text-green-400' : 'text-red-400 font-bold'}`}>
+                                                                {formatDuration(issue.reactionTime, true)}
+                                                            </span>
+                                                            {!issue.reactionSLAMet && !issue.projectedReactionBreach && (
+                                                                // Only show FAILED if no projection (meaning it's done and failed)
+                                                                <span className="text-[10px] text-red-400 bg-red-900/20 px-1 rounded mt-1 border border-red-900/50">
+                                                                    FAILED
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     )}
-                                                </div>
-                                            )}
-                                        </td>
+                                                </td>
 
-                                        {/* Reaction Due */}
-                                        <td className="px-6 py-4 text-center">
-                                            <Countdown dateStr={issue.projectedReactionBreach} isPaused={false} />
-                                        </td>
+                                                {/* Reaction Due */}
+                                                <td className="px-6 py-4 text-center">
+                                                    <Countdown dateStr={issue.projectedReactionBreach} isPaused={false} />
+                                                </td>
+                                            </>
+                                        )}
 
                                         {/* Resolution Time */}
-                                        <td className="px-6 py-4 text-right border-l border-gray-700 font-mono text-gray-500">{formatDuration(issue.slaTargetResolution)}</td>
+                                        <td className={`px-6 py-4 text-right ${!hideReaction ? 'border-l border-gray-700' : ''} font-mono text-gray-500`}>{formatDuration(issue.slaTargetResolution)}</td>
                                         <td className="px-6 py-4 text-right font-mono">
                                             {isRejected ? <span className="text-gray-600">-</span> : (
                                                 <div className="flex flex-col items-end">
@@ -220,7 +229,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                     {/* Accordion Row */}
                                     {isExpanded && (
                                         <tr className="bg-brand-card/20 dark:bg-black/20 animate-in fade-in slide-in-from-top-2 duration-200">
-                                            <td colSpan={10} className="p-0 border-b border-gray-200 dark:border-white/10">
+                                            <td colSpan={hideReaction ? 8 : 10} className="p-0 border-b border-gray-200 dark:border-white/10">
                                                 <div className="p-4 pl-16 space-y-4 max-h-96 overflow-y-auto">
                                                     {issue.timeBreakdown && Object.keys(issue.timeBreakdown).length > 0 && (
                                                         <div className="space-y-2 pb-4 border-b border-gray-200 dark:border-white/5">

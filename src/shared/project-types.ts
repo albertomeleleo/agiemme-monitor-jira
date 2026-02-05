@@ -22,6 +22,7 @@ export interface ProjectConfig {
     };
     tiers?: string[]; // Ordered list of enabled tiers (e.g. ['P1', 'P2']). If missing, use defaults.
     priorities: Record<string, string>; // Jira Priority -> SLA Tier
+    jiraProjectKey?: string; // The Project Key in Jira (e.g. "RA")
     issueTypes: {
         raw: string; // The string in CSV (e.g. "[System] Service request")
         label: string; // Display label (e.g. "🤖 System")

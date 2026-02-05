@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Project, ProjectConfig, SLAGroup } from '../../../shared/project-types'
-import { Button, Input, Card, Typography } from '@design-system'
+import { JiraProject } from '../../../shared/jira-types'
+import { Button, Input, Card, Typography, Select } from '@design-system'
 
 interface ProjectSettingsModalProps {
     project: Project
@@ -16,6 +17,13 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
         issueTypes: []
     })
     const [loading, setLoading] = useState(false)
+    const [jiraProjects, setJiraProjects] = useState<JiraProject[]>([])
+
+    useEffect(() => {
+        if (isOpen) {
+            window.api.jiraGetProjects().then(setJiraProjects).catch(console.error)
+        }
+    }, [isOpen])
 
     useEffect(() => {
         if (isOpen && project.config) {
@@ -510,6 +518,38 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
                                         <div className="text-xs text-gray-500 italic p-2 border border-dashed border-white/10 rounded">No aggregations defined. Standard per-tier tolerances apply.</div>
                                     )}
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Jira Mapping */}
+                    <div className="space-y-4 border-t border-white/10 pt-6">
+                        <Typography variant="h4" className="text-brand-cyan">Jira Mapping</Typography>
+                        <Typography variant="body" className="text-gray-400 text-sm">Select the Jira Project that corresponds to this local project for "Open Issues" tracking.</Typography>
+
+                        <div className="bg-brand-deep/30 p-4 rounded-lg border border-white/5 flex items-center gap-4">
+                            <div className="flex-1">
+                                <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Jira Project</label>
+                                <Select
+                                    fullWidth
+                                    value={config.jiraProjectKey || ''}
+                                    onChange={(e) => setConfig({ ...config, jiraProjectKey: e.target.value })}
+                                >
+                                    <option value="">-- Manual Entry / None --</option>
+                                    {jiraProjects.map(p => (
+                                        <option key={p.id} value={p.key}>{p.name} ({p.key})</option>
+                                    ))}
+                                </Select>
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Manual Project Key</label>
+                                <Input
+                                    fullWidth
+                                    placeholder="e.g. RA"
+                                    value={config.jiraProjectKey || ''}
+                                    onChange={(e) => setConfig({ ...config, jiraProjectKey: e.target.value })}
+                                    className="font-mono"
+                                />
                             </div>
                         </div>
                     </div>
