@@ -13,6 +13,7 @@ export function SLALegend({ validIssues, config }: SLALegendProps): JSX.Element 
     const reactionGroups = config?.sla?.aggregation?.reaction || []
     const resolutionGroups = config?.sla?.aggregation?.resolution || []
     const hasAggregation = reactionGroups.length > 0 || resolutionGroups.length > 0
+
     const tiers = config?.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']
 
     // Helper to Convert Minutes to HH:MM (Copied from ProjectSettingsModal logic or similar)

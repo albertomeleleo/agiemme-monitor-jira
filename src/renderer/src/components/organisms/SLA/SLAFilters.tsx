@@ -21,6 +21,8 @@ interface SLAFiltersProps {
     onExport: () => void
     onRefresh?: () => void
     isRefreshing?: boolean
+    showLegend: boolean
+    onShowLegendChange: (show: boolean) => void
 }
 
 export function SLAFilters({
@@ -43,7 +45,9 @@ export function SLAFilters({
     onReset,
     onExport,
     onRefresh,
-    isRefreshing
+    isRefreshing,
+    showLegend,
+    onShowLegendChange
 }: SLAFiltersProps): JSX.Element {
 
     return (
@@ -101,6 +105,16 @@ export function SLAFilters({
                         className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-brand-cyan focus:ring-brand-cyan focus:ring-offset-gray-800 accent-brand-cyan"
                     />
                     <Typography variant="caption" className="!text-current">Exclude Rejected</Typography>
+                </label>
+
+                <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white transition-colors ml-4">
+                    <input
+                        type="checkbox"
+                        checked={showLegend}
+                        onChange={(e) => onShowLegendChange(e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-brand-cyan focus:ring-brand-cyan focus:ring-offset-gray-800 accent-brand-cyan"
+                    />
+                    <Typography variant="caption" className="!text-current">Show Legend</Typography>
                 </label>
             </div>
 

@@ -10,6 +10,7 @@ const api = {
     uploadFile: (projectName: string): Promise<boolean> => ipcRenderer.invoke('upload-file', projectName),
     deleteFile: (projectName: string, filename: string): Promise<boolean> => ipcRenderer.invoke('delete-file', projectName, filename),
     saveFile: (projectName: string, filename: string, content: string): Promise<boolean> => ipcRenderer.invoke('save-file', projectName, filename, content),
+    importConfig: (projectName: string): Promise<any> => ipcRenderer.invoke('import-config', projectName),
     saveProjectConfig: (projectName: string, config: any): Promise<boolean> => ipcRenderer.invoke('save-project-config', projectName, config),
     parseSLA: (content: string, config?: any): Promise<any> => ipcRenderer.invoke('parse-sla', content, config),
     // Jira
@@ -21,12 +22,7 @@ const api = {
     jiraGetIssues: (projectKey: string, versionId: string): Promise<any[]> => ipcRenderer.invoke('jira-get-issues', projectKey, versionId),
     jiraSearchIssues: (jql: string, options?: any): Promise<any> => ipcRenderer.invoke('jira-search-issues', jql, options),
     jiraParseApiIssues: (issues: any[], config?: any): Promise<any> => ipcRenderer.invoke('jira-parse-api-issues', issues, config),
-    // Issues
-    issuesGetDB: (projectName: string): Promise<any> => ipcRenderer.invoke('issues-get-db', projectName),
-    issuesSaveDB: (projectName: string, db: any): Promise<any> => ipcRenderer.invoke('issues-save-db', projectName, db),
-    issuesSync: (projectName: string, jql?: string): Promise<any> => ipcRenderer.invoke('issues-sync', projectName, jql),
-    issuesSearchAll: (query: string): Promise<any[]> => ipcRenderer.invoke('issues-search-all', query),
-    testNotification: (provider: 'whatsapp' | 'telegram', config: any): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('test-notification', provider, config)
+
 }
 
 if (process.contextIsolated) {

@@ -83,7 +83,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                     </Typography>
                 )}
             </div>
-            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <div className="overflow-x-auto  overflow-y-auto custom-scrollbar">
                 <table className="w-full text-left text-sm text-brand-text-sec">
                     <caption className="sr-only">Jira issues SLA analysis details, including reaction and resolution times</caption>
                     <thead className="bg-brand-deep/80 text-white uppercase font-medium sticky top-0 z-10 backdrop-blur-md">

@@ -3,11 +3,9 @@ import { join, basename } from 'path'
 import { copyFile, mkdir, unlink } from 'fs/promises'
 
 // Import services
+// Import services
 import { jiraService } from './services/jira-service'
-import { issuesDB } from './services/issues-db'
-import { automationService } from './services/automation-service'
 import { projectService } from './services/project-service'
-import { notificationService } from './services/notification-service'
 import { scanReleases } from './scanner'
 import { parseSLA, parseJiraApiIssues } from './sla-parser'
 
@@ -48,6 +46,23 @@ app.whenReady().then(() => {
     ipcMain.handle('get-projects', () => projectService.getProjects())
     ipcMain.handle('create-project', (_, name) => projectService.createProject(name))
     ipcMain.handle('save-project-config', (_, name, config) => projectService.saveConfig(name, config))
+
+    ipcMain.handle('import-config', async () => {
+        const { canceled, filePaths } = await dialog.showOpenDialog({
+            properties: ['openFile'],
+            filters: [{ name: 'JSON', extensions: ['json'] }]
+        })
+        if (canceled || filePaths.length === 0) return null
+
+        try {
+            const { readFile } = await import('fs/promises')
+            const content = await readFile(filePaths[0], 'utf-8')
+            return JSON.parse(content)
+        } catch (e) {
+            console.error('Failed to import config', e)
+            return null
+        }
+    })
 
     ipcMain.handle('get-releases', async (_, projectName) => {
         const releasesPath = join(projectService.getDocumentsPath(), projectName)
@@ -105,32 +120,7 @@ app.whenReady().then(() => {
     ipcMain.handle('jira-search-issues', (_, jql, opts) => jiraService.searchIssues(jql, opts))
     ipcMain.handle('jira-parse-api-issues', (_, issues, config) => parseJiraApiIssues(issues, config))
 
-    // Issues
-    ipcMain.handle('issues-get-db', (_, name) => issuesDB.getDB(name))
-    ipcMain.handle('issues-save-db', async (_, name, db) => {
-        await issuesDB.saveDB(name, db)
-        await automationService.startProject(name)
-        return true
-    })
-    ipcMain.handle('issues-sync', async (_, name, jql) => {
-        const db = await issuesDB.getDB(name)
-        const res = await jiraService.searchIssues(jql || db.jql, { maxResults: 1000, fields: ['summary', 'status', 'updated', 'priority', 'assignee'] })
-        return issuesDB.updateIssues(name, res.issues, jql || db.jql)
-    })
-    ipcMain.handle('issues-search-all', async (_, query) => {
-        const projects = await projectService.getProjects()
-        const results: any[] = []
-        for (const p of projects) {
-            const db = await issuesDB.getDB(p.name)
-            const filtered = db.issues.filter(i => i.key.toLowerCase().includes(query.toLowerCase()) || i.summary.toLowerCase().includes(query.toLowerCase()))
-            if (filtered.length > 0) results.push({ projectName: p.name, issues: filtered })
-        }
-        return results
-    })
 
-    ipcMain.handle('test-notification', (_, provider, config) => notificationService.sendTest(provider, config))
-
-    automationService.startAll()
     createWindow()
 
     app.on('activate', () => {

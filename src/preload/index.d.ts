@@ -10,6 +10,7 @@ interface Api {
     uploadFile: (projectName: string) => Promise<boolean>
     deleteFile: (projectName: string, filename: string) => Promise<boolean>
     saveFile: (projectName: string, filename: string, content: string) => Promise<boolean>
+    importConfig: (projectName: string) => Promise<any>
     parseSLA: (content: string, config?: any) => Promise<any>
     // Jira
     jiraGetConfig: () => Promise<import('../shared/jira-types').JiraConfig>
@@ -20,12 +21,7 @@ interface Api {
     jiraGetIssues: (projectKey: string, versionId: string) => Promise<import('../shared/jira-types').JiraIssue[]>
     jiraSearchIssues: (jql: string, options?: any) => Promise<any>
     jiraParseApiIssues: (issues: any[], config?: any) => Promise<any>
-    // Issues
-    issuesGetDB: (projectName: string) => Promise<any>
-    issuesSaveDB: (projectName: string, db: any) => Promise<boolean>
-    issuesSync: (projectName: string, jql?: string) => Promise<any>
-    issuesSearchAll: (query: string) => Promise<any[]>
-    testNotification: (provider: 'whatsapp' | 'telegram', config: any) => Promise<{ success: boolean; error?: string }>
+
 }
 
 declare global {

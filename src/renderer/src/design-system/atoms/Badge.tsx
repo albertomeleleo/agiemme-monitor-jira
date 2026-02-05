@@ -20,11 +20,11 @@ export function Badge({ variant, label, children, className = '' }: BadgeProps):
     }
 
     const icons = {
-        bugfix: "🐛",
-        evolutive: "✨",
-        regression: "⚠️",
+        bugfix: "",
+        evolutive: "",
+        regression: "",
         success: "✓",
-        warning: "!",
+        warning: "",
         neutral: "",
         info: "ℹ",
         default: ""

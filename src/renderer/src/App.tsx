@@ -1,13 +1,12 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { ReleaseData, Project } from './types'
 
-import { Upload } from './components/Upload'
+import { JiraImportModal } from './components/JiraImportModal'
 import { Sidebar } from './components/Sidebar'
-
 import { ReleaseDetail } from './components/ReleaseDetail'
 import { SLADashboard } from './components/SLADashboard'
 import { ProjectSettingsModal } from './components/ProjectSettingsModal'
-import { IssuesDashboard } from './components/IssuesDashboard'
+
 
 import { ReleaseCard } from './components/ReleaseCard'
 import { ReleaseList } from './components/ReleaseList'
@@ -16,7 +15,7 @@ import { IssueTypeDistributionChart } from './components/charts/IssueTypeDistrib
 import { ReleaseTimelineChart } from './components/charts/ReleaseTimelineChart'
 import { Typography, Card, Button, Input, Select } from '@design-system'
 
-type ViewMode = 'cards' | 'issues' | 'sla'
+type ViewMode = 'cards' | 'sla'
 type SortOption = 'date' | 'bugfixes' | 'evolutives' | 'regression'
 type SortDirection = 'asc' | 'desc'
 
@@ -26,11 +25,12 @@ function App(): JSX.Element {
     const [releases, setReleases] = useState<ReleaseData[]>([])
     const [loading, setLoading] = useState(false)
     const [viewMode, setViewMode] = useState<ViewMode>('cards')
-    const [projectView, setProjectView] = useState<'releases' | 'sla' | 'issues'>('releases')
+    const [projectView, setProjectView] = useState<'releases' | 'sla'>('releases')
 
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedRelease, setSelectedRelease] = useState<ReleaseData | null>(null)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+    const [showJiraModal, setShowJiraModal] = useState(false)
 
     // Sorting State
     const [sortOption, setSortOption] = useState<SortOption>('date')
@@ -152,6 +152,7 @@ function App(): JSX.Element {
                     currentProject={currentProject}
                     currentView={projectView}
                     onSelectView={setProjectView}
+                    onRefresh={() => { }}
                     onSelectProject={(p) => {
                         if (p.name !== currentProject?.name) {
                             setCurrentProject(p)
@@ -159,7 +160,6 @@ function App(): JSX.Element {
                         }
                     }}
                     onCreateProject={handleCreateProject}
-                    onRefresh={refreshProjects}
                 />
             </nav>
 
@@ -207,7 +207,13 @@ function App(): JSX.Element {
                                 {/* Stats & Upload (Visible only in Releases view) */}
                                 {projectView === 'releases' && (
                                     <div className="flex gap-4 items-center flex-wrap">
-                                        <Upload onUploadSuccess={fetchReleases} currentProject={currentProject.name} />
+                                        <Button
+                                            onClick={() => setShowJiraModal(true)}
+                                            className="gap-2"
+                                            variant="primary"
+                                        >
+                                            <span role="img" aria-hidden="true">📥</span> Import from Jira
+                                        </Button>
                                         <Card variant="glass" className="!px-4 !py-2 border border-white/10">
                                             <Typography variant="caption" className="block text-brand-text-sec">Total</Typography>
                                             <Typography variant="h3" className="text-white">{releases.length}</Typography>
@@ -276,15 +282,6 @@ function App(): JSX.Element {
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                                                 </button>
-                                                <button
-                                                    onClick={() => setViewMode('issues')}
-                                                    className={`p-2 rounded-md transition-colors ${viewMode === 'issues' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
-                                                    title="List View"
-                                                    aria-label="Switch to List View"
-                                                    aria-pressed={viewMode === 'issues'}
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -324,11 +321,9 @@ function App(): JSX.Element {
                                         </div>
                                     )}
                                 </>
-                            ) : projectView === 'sla' ? (
+                            ) : (
                                 // SLA DASHBOARD
                                 <SLADashboard currentProject={currentProject} />
-                            ) : (
-                                <IssuesDashboard currentProject={currentProject} />
                             )}
                         </>
                     ) : (
@@ -367,6 +362,17 @@ function App(): JSX.Element {
                     />
                 )
             }
+
+            {showJiraModal && currentProject && (
+                <JiraImportModal
+                    currentProject={currentProject.name}
+                    onClose={() => setShowJiraModal(false)}
+                    onSuccess={() => {
+                        fetchReleases()
+                        refreshProjects()
+                    }}
+                />
+            )}
         </div>
     )
 }

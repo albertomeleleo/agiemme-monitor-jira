@@ -35,6 +35,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
     const [activeTab, setActiveTab] = useState<'overview' | 'issues'>('overview')
     const [selectedIssueType, setSelectedIssueType] = useState<string>(issueTypes[0]?.raw || 'Bug')
+    const [showLegend, setShowLegend] = useState(true)
 
     // Jira Fetch Modal
     const [showJiraModal, setShowJiraModal] = useState(false)
@@ -461,14 +462,20 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 onExport={handleExport}
                 onRefresh={lastJql ? handleRefresh : undefined}
                 isRefreshing={loading}
+                showLegend={showLegend}
+                onShowLegendChange={setShowLegend}
             />
+
+            {/* Legend - Global reference */}
+            {showLegend && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                    <SLALegend validIssues={validIssues} config={currentProject.config} />
+                </div>
+            )}
 
             {
                 activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {/* Legend */}
-                        <SLALegend validIssues={validIssues} config={currentProject.config} />
-
                         {/* Charts */}
                         <SLACharts
                             chartData={chartData}

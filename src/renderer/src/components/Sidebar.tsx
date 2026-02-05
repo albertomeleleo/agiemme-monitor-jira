@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { JiraImportModal } from './JiraImportModal'
+
 import logo from '../assets/logo.png'
 import { Project } from '../types'
 
@@ -9,14 +9,13 @@ interface SidebarProps {
     onSelectProject: (project: Project) => void
     onCreateProject: (name: string) => void
     onRefresh: () => void
-    currentView?: 'releases' | 'sla' | 'issues'
-    onSelectView?: (view: 'releases' | 'sla' | 'issues') => void
+    currentView?: 'releases' | 'sla'
+    onSelectView?: (view: 'releases' | 'sla') => void
 }
 
-export function Sidebar({ projects, currentProject, onSelectProject, onCreateProject, onRefresh, currentView = 'releases', onSelectView }: SidebarProps): JSX.Element {
+export function Sidebar({ projects, currentProject, onSelectProject, onCreateProject, currentView = 'releases', onSelectView }: SidebarProps): JSX.Element {
     const [isCreating, setIsCreating] = useState(false)
     const [newProjectName, setNewProjectName] = useState('')
-    const [showJiraModal, setShowJiraModal] = useState(false)
 
     const handleCreate = () => {
         if (newProjectName.trim()) {
@@ -79,16 +78,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                                 >
                                     <span>⏱️</span> SLA Dashboard
                                 </button>
-                                <button
-                                    onClick={() => onSelectView?.('issues')}
-                                    aria-current={currentView === 'issues' ? 'location' : undefined}
-                                    className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'issues'
-                                        ? 'text-brand-cyan bg-brand-cyan/5'
-                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
-                                        }`}
-                                >
-                                    <span>🐛</span> Issues
-                                </button>
+
                             </div>
                         )}
                     </div>
@@ -123,15 +113,6 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                 )}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-800">
-                <button
-                    onClick={() => setShowJiraModal(true)}
-                    aria-label="Import issues from Jira"
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-brand-blue border border-dashed border-brand-blue/30 rounded-lg hover:text-white hover:bg-brand-blue/20 transition-all"
-                >
-                    <span role="img" aria-hidden="true">📥</span> Import from Jira
-                </button>
-            </div>
 
             {/* Help Button (Moved from global nav to bottom) */}
             <div className="mt-4 pt-4 border-t border-gray-800">
@@ -147,16 +128,6 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                 </div>
             </div>
 
-
-            {showJiraModal && currentProject && (
-                <JiraImportModal
-                    currentProject={currentProject.name}
-                    onClose={() => setShowJiraModal(false)}
-                    onSuccess={() => {
-                        onRefresh()
-                    }}
-                />
-            )}
         </div>
     )
 }

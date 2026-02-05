@@ -23,6 +23,7 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
         }
     }, [isOpen, project])
 
+
     // Helper to Convert Minutes to HH:MM
     const toHHMM = (mins: number) => {
         if (!mins && mins !== 0) return '00:00'
@@ -49,6 +50,26 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
             alert('Failed to save configuration')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleExport = async () => {
+        const filename = `${project.name}-config.json`
+        const content = JSON.stringify(config, null, 2)
+        const success = await window.api.saveFile(project.name, filename, content)
+        if (success) {
+            alert(`Configuration exported to Documents/ReleaseAnalyzer/${project.name}/${filename}`)
+        } else {
+            alert('Failed to export configuration')
+        }
+    }
+
+    const handleImport = async () => {
+        const importedConfig = await window.api.importConfig(project.name)
+        if (importedConfig) {
+            if (confirm('This will overwrite current settings. Continue?')) {
+                setConfig(importedConfig)
+            }
         }
     }
 
@@ -588,13 +609,23 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
 
                 </div>
 
-                <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-white/10">
-                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                    <Button variant="primary" onClick={handleSave} disabled={loading}>
-                        {loading ? 'Saving...' : 'Save Configuration'}
-                    </Button>
+                <div className="flex justify-between mt-8 pt-4 border-t border-white/10">
+                    <div className="flex gap-2">
+                        <Button variant="secondary" onClick={handleExport}>
+                            📤 Export Config
+                        </Button>
+                        <Button variant="secondary" onClick={handleImport}>
+                            📥 Import Config
+                        </Button>
+                    </div>
+                    <div className="flex gap-3">
+                        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSave} disabled={loading}>
+                            {loading ? 'Saving...' : 'Save Configuration'}
+                        </Button>
+                    </div>
                 </div>
-            </Card>
-        </div>
+            </Card >
+        </div >
     )
 }
