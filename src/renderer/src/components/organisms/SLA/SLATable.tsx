@@ -2,6 +2,24 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { Card, Badge, Typography, IssueStatusBadge } from '@design-system'
 import { SLAIssue } from '../../../../../shared/sla-types'
 import { formatDuration } from './utils'
+import { formatDistanceToNow, parseISO, isPast } from 'date-fns'
+import { it } from 'date-fns/locale'
+
+function Countdown({ dateStr, isPaused }: { dateStr?: string, isPaused?: boolean }) {
+    if (isPaused) return <span className="text-orange-400 font-bold text-[10px] uppercase">Paused</span>
+    if (!dateStr) return <span className="text-gray-600">-</span>
+
+    const date = parseISO(dateStr)
+    if (isPast(date)) return <span className="text-red-500 font-bold text-[10px]">BREACHED</span>
+
+    const distance = formatDistanceToNow(date, { addSuffix: true, locale: it })
+    return (
+        <div className="flex flex-col items-end">
+            <span className="text-blue-300 font-bold text-xs">{distance}</span>
+            <span className="text-[9px] text-gray-500">{date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+    )
+}
 
 interface SLATableProps {
     issues: SLAIssue[]
@@ -74,17 +92,23 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                             <th className="px-6 py-4" scope="col">Key</th>
                             <th className="px-6 py-4" scope="col">Priority</th>
                             <th className="px-6 py-4" scope="col">Status</th>
-                            <th className="px-6 py-4 text-center border-l border-white/10" scope="col">Reaction (Target: 00:15)</th>
-                            <th className="px-6 py-4 text-center border-l border-white/10" colSpan={3} scope="col">Resolution (hh:mm:ss)</th>
+                            <th className="px-6 py-4 text-center border-l border-white/10" colSpan={2} scope="col">Reaction</th>
+                            <th className="px-6 py-4 text-center border-l border-white/10" colSpan={4} scope="col">Resolution</th>
                         </tr>
                         <tr className="bg-brand-deep/30 text-[10px] text-gray-400 sticky top-[52px] z-10 backdrop-blur-md">
                             <th className="px-6 py-2" scope="col"></th>
                             <th className="px-6 py-2" scope="col"></th>
                             <th className="px-6 py-2" scope="col"></th>
-                            <th className="px-6 py-2 text-center" scope="col">Actual</th>
+                            <th className="px-6 py-2" scope="col"></th>
+
+                            {/* Reaction */}
                             <th className="px-6 py-2 text-center border-l border-white/10" scope="col">Actual</th>
+                            <th className="px-6 py-2 text-center" scope="col">Due</th>
+
+                            {/* Resolution */}
                             <th className="px-6 py-2 text-right border-l border-white/10" scope="col">Target</th>
-                            <th className="px-6 py-2 text-right" scope="col">Actual (Net)</th>
+                            <th className="px-6 py-2 text-right" scope="col">Actual</th>
+                            <th className="px-6 py-2 text-right" scope="col">Due</th>
                             <th className="px-6 py-2 text-right" scope="col">Paused</th>
                         </tr>
                     </thead>
@@ -151,13 +175,19 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                                     <span className={`font-mono ${issue.reactionSLAMet ? 'text-green-400' : 'text-red-400 font-bold'}`}>
                                                         {formatDuration(issue.reactionTime, true)}
                                                     </span>
-                                                    {!issue.reactionSLAMet && (
+                                                    {!issue.reactionSLAMet && !issue.projectedReactionBreach && (
+                                                        // Only show FAILED if no projection (meaning it's done and failed)
                                                         <span className="text-[10px] text-red-400 bg-red-900/20 px-1 rounded mt-1 border border-red-900/50">
-                                                            FAILED (+{formatDuration(issue.reactionTime - 15)})
+                                                            FAILED
                                                         </span>
                                                     )}
                                                 </div>
                                             )}
+                                        </td>
+
+                                        {/* Reaction Due */}
+                                        <td className="px-6 py-4 text-center">
+                                            <Countdown dateStr={issue.projectedReactionBreach} isPaused={false} />
                                         </td>
 
                                         {/* Resolution Time */}
@@ -168,7 +198,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                                     <span className={issue.resolutionSLAMet ? 'text-green-400' : 'text-red-400 font-bold'}>
                                                         {formatDuration(issue.resolutionTime, true)}
                                                     </span>
-                                                    {!issue.resolutionSLAMet && (
+                                                    {!issue.resolutionSLAMet && !issue.projectedResolutionBreach && (
                                                         <span className="text-[10px] text-red-400 bg-red-900/20 px-1 rounded mt-1 border border-red-900/50">
                                                             FAILED
                                                         </span>
@@ -176,6 +206,12 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                                 </div>
                                             )}
                                         </td>
+
+                                        {/* Resolution Due */}
+                                        <td className="px-6 py-4 text-right">
+                                            <Countdown dateStr={issue.projectedResolutionBreach} isPaused={issue.isResolutionPaused} />
+                                        </td>
+
                                         <td className="px-6 py-4 text-right font-mono text-gray-500">
                                             {isRejected ? <span className="text-gray-600">-</span> : formatDuration(issue.timeInPause)}
                                         </td>
@@ -235,7 +271,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                 </>
                             )
                         })}
-                    </tbody>
+                    </tbody >
                 </table>
                 {visibleCount < issues.length && (
                     <div ref={observerTarget} className="p-8 flex justify-center border-t border-white/5 bg-brand-deep/20">

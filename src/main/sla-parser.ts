@@ -419,6 +419,39 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         const resolutionMet = workingTime <= (targetRes + 0.001)
         const reactionMet = reactionMinutes <= (targetReact + 0.001)
 
+        // --- Active Issue Projections ---
+        let projectedReactionBreach: string | undefined
+        let projectedResolutionBreach: string | undefined
+
+        // Determine Pause State (Current)
+        const pauseStatusesLow = pauseStatuses.map(s => s.toLowerCase())
+        const isStatusPaused = pauseStatusesLow.includes(currentStatus.toLowerCase())
+        const isDipendenzaPaused = pauseDependencies.includes(currentDipendenza)
+        const isPaused = isStatusPaused || isDipendenzaPaused
+
+        const excludeLunch = (slaConfig as any).excludeLunchBreak || false
+
+        // Reaction Projection (if not yet presa in carico)
+        if (!tPresaInCarico && tBacklog) {
+            const consumed = reactionMinutes
+            const remaining = targetReact - consumed
+            if (remaining > 0) {
+                // Reaction clock usually Business Hours? Or matches Priority?
+                // Assuming same rules as Resolution for now (is24x7)
+                projectedReactionBreach = addBusinessMinutes(new Date(), remaining, excludeLunch, is24x7).toISOString()
+            }
+        }
+
+        // Resolution Projection (if started but active)
+        if (tPresaInCarico && !tDone) {
+            const consumed = workingTime
+            const remaining = targetRes - consumed
+
+            if (remaining > 0 && !isPaused) {
+                projectedResolutionBreach = addBusinessMinutes(new Date(), remaining, excludeLunch, is24x7).toISOString()
+            }
+        }
+
         // Update Effective Creation Date if mapped
         parsedIssues.push({
             key,
@@ -447,7 +480,13 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
                     fromString: i.fromString || '',
                     toString: i.toString || ''
                 }))
-            }))
+            })),
+
+            // Populated later
+            projectedReactionBreach,
+            projectedResolutionBreach,
+            isReactionPaused: false, // Reaction usually doesn't pause?
+            isResolutionPaused: isPaused
         })
 
         // Aggregation
@@ -559,4 +598,138 @@ function calculateBusinessMinutes(start: Date, end: Date, excludeLunch: boolean 
     }
 
     return totalMinutes
+}
+
+export function addBusinessMinutes(start: Date, minutesToAdd: number, excludeLunch: boolean = false, is24x7: boolean = false): Date {
+    if (minutesToAdd <= 0) return start
+
+    let current = new Date(start)
+    let remaining = minutesToAdd
+
+    if (is24x7) {
+        // Simple add, but skip lunches if needed
+        while (remaining > 0) {
+            if (excludeLunch) {
+                const lunchStart = new Date(current)
+                lunchStart.setHours(13, 0, 0, 0)
+                const lunchEnd = new Date(current)
+                lunchEnd.setHours(14, 0, 0, 0)
+
+                if (current >= lunchStart && current < lunchEnd) {
+                    current.setTime(lunchEnd.getTime())
+                }
+
+                // Check dist to next lunch
+                let nextLunch = new Date(current)
+                if (current.getHours() >= 14) {
+                    nextLunch.setDate(nextLunch.getDate() + 1)
+                }
+                nextLunch.setHours(13, 0, 0, 0)
+
+                const minsToLunch = (nextLunch.getTime() - current.getTime()) / 60000
+                if (remaining <= minsToLunch) {
+                    current.setTime(current.getTime() + remaining * 60000)
+                    remaining = 0
+                } else {
+                    remaining -= minsToLunch
+                    current.setTime(nextLunch.getTime() + 60 * 60000) // Skip lunch
+                }
+            } else {
+                current.setTime(current.getTime() + remaining * 60000)
+                remaining = 0
+            }
+        }
+        return current
+    }
+
+    // 1. Adjust start to formatted business time if needed
+    // If before 9, move to 9. If after 18, move to tomorrow 9.
+    // Loop until valid business start
+    while (true) {
+        const isWk = current.getDay() === 0 || current.getDay() === 6
+        const isHol = isHoliday(current)
+        const hour = current.getHours()
+
+        if (isWk || isHol) {
+            current.setDate(current.getDate() + 1)
+            current.setHours(BUSINESS_START_HOUR, 0, 0, 0)
+            continue
+        }
+
+        if (hour >= BUSINESS_END_HOUR) {
+            current.setDate(current.getDate() + 1)
+            current.setHours(BUSINESS_START_HOUR, 0, 0, 0)
+            continue
+        }
+
+        if (hour < BUSINESS_START_HOUR) {
+            current.setHours(BUSINESS_START_HOUR, 0, 0, 0)
+        }
+
+        break
+    }
+
+    // 2. Add minutes
+    while (remaining > 0) {
+        // We are guaranteed to be inside a business day, >= 09:00 and < 18:00
+        const endOfDay = new Date(current)
+        endOfDay.setHours(BUSINESS_END_HOUR, 0, 0, 0)
+
+        // Calculate available minutes today
+        // Lunch Logic: 13:00 - 14:00
+        const lunchStart = new Date(current)
+        lunchStart.setHours(13, 0, 0, 0)
+        const lunchEnd = new Date(current)
+        lunchEnd.setHours(14, 0, 0, 0)
+
+        // Determine current phase relative to lunch
+        // Phase 1: Morning (Start < 13:00)
+        // Phase 2: Lunch (13:00 <= Start < 14:00) -> Should have been skipped logic wise, but let's handle
+        // Phase 3: Afternoon (Start >= 14:00)
+
+        // Adjust if we are IN lunch (should just jump to 14:00 if excludeLunch is on)
+        if (excludeLunch && current >= lunchStart && current < lunchEnd) {
+            current.setTime(lunchEnd.getTime())
+        }
+
+        let minutesAvailableToday = (endOfDay.getTime() - current.getTime()) / (1000 * 60)
+
+        if (excludeLunch) {
+            // If before lunch, we lose 60 mins of "capacity" if we cross it?
+            // No, we just have a gap.
+            // If current < lunchStart, we have (LunchStart - Current) + (18:00 - 14:00)
+            if (current < lunchStart) {
+                const morningMins = (lunchStart.getTime() - current.getTime()) / (1000 * 60)
+                // If we can finish in morning
+                if (remaining <= morningMins) {
+                    current.setTime(current.getTime() + remaining * 60 * 1000)
+                    remaining = 0
+                    break
+                }
+
+                // Use up morning
+                remaining -= morningMins
+                current.setTime(lunchEnd.getTime()) // Jump to 14:00
+                continue // Re-eval loop (now we are at 14:00)
+            }
+        }
+
+        if (remaining <= minutesAvailableToday) {
+            current.setTime(current.getTime() + remaining * 60 * 1000)
+            remaining = 0
+        } else {
+            remaining -= minutesAvailableToday
+            current.setDate(current.getDate() + 1)
+            current.setHours(BUSINESS_START_HOUR, 0, 0, 0)
+            // Loop continues to find next valid business day
+            while (true) {
+                const isWk = current.getDay() === 0 || current.getDay() === 6
+                const isHol = isHoliday(current)
+                if (!isWk && !isHol) break
+                current.setDate(current.getDate() + 1)
+            }
+        }
+    }
+
+    return current
 }

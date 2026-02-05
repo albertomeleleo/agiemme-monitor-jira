@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { SLAReport } from '../../../shared/sla-types'
+import { SLAReport, SLAIssue } from '../../../shared/sla-types'
 import { Project } from '../../../shared/project-types'
 import { parseDate, formatDuration } from './organisms/SLA/utils'
 import { SLAStatsGrid } from './organisms/SLA/SLAStatsGrid'
@@ -312,7 +312,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
 
     // Extract available months and priorities
     const availableMonths = uniqueMonths(report?.issues || [])
-    const availablePriorities = ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']
+    const availablePriorities = currentProject.config?.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']
 
     // 1. FILTERING
     const filteredIssues = report?.issues.filter(i => {
@@ -368,30 +368,68 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         }
     })
 
-    const getComplianceStats = (tier: string) => {
-        const tierIssues = validIssues.filter(i => i.slaTier === tier)
-        if (tierIssues.length === 0) return { reaction: 100, resolution: 100 }
-
-        const reactionMet = tierIssues.filter(i => i.reactionSLAMet).length
-        const resolutionMet = tierIssues.filter(i => i.resolutionSLAMet).length
-
+    const getComplianceStatsForIssues = (issuesSubset: SLAIssue[]) => {
+        if (issuesSubset.length === 0) return { reaction: 100, resolution: 100 }
+        const reactionMet = issuesSubset.filter(i => i.reactionSLAMet).length
+        const resolutionMet = issuesSubset.filter(i => i.resolutionSLAMet).length
         return {
-            reaction: (reactionMet / tierIssues.length) * 100,
-            resolution: (resolutionMet / tierIssues.length) * 100
+            reaction: (reactionMet / issuesSubset.length) * 100,
+            resolution: (resolutionMet / issuesSubset.length) * 100
         }
     }
 
-    // Prepare Data for Compliance Charts
-    const complianceChartData = availablePriorities.map(tier => {
-        const stats = getComplianceStats(tier)
-        return {
-            name: tier,
-            reactionActual: stats.reaction,
-            reactionTarget: 95,
-            resolutionActual: stats.resolution,
-            resolutionTarget: tier === 'Expedite' ? 90 : 80
-        }
-    })
+    // --- REACTION DATA ---
+    const reactionGroups = currentProject.config?.sla?.aggregation?.reaction || []
+    const reactionChartData = reactionGroups.length > 0
+        ? reactionGroups.map(g => {
+            const groupIssues = validIssues.filter(i => g.tiers.includes(i.slaTier))
+            const stats = getComplianceStatsForIssues(groupIssues)
+            return {
+                name: g.name,
+                reactionActual: stats.reaction,
+                reactionTarget: 100 - g.tolerance,
+                resolutionActual: 0, resolutionTarget: 0 // Type safety filler
+            }
+        })
+        : availablePriorities.map(tier => {
+            const issues = validIssues.filter(i => i.slaTier === tier)
+            const stats = getComplianceStatsForIssues(issues)
+            const tol = currentProject.config?.sla?.tolerances?.reaction?.[tier] ?? 5
+            return {
+                name: tier,
+                reactionActual: stats.reaction,
+                reactionTarget: 100 - tol,
+                resolutionActual: 0, resolutionTarget: 0
+            }
+        })
+
+    // --- RESOLUTION DATA ---
+    const resolutionGroups = currentProject.config?.sla?.aggregation?.resolution || []
+    const resolutionChartData = resolutionGroups.length > 0
+        ? resolutionGroups.map(g => {
+            const groupIssues = validIssues.filter(i => g.tiers.includes(i.slaTier))
+            const stats = getComplianceStatsForIssues(groupIssues)
+            return {
+                name: g.name,
+                resolutionActual: stats.resolution,
+                resolutionTarget: 100 - g.tolerance,
+                reactionActual: 0, reactionTarget: 0
+            }
+        })
+        : availablePriorities.map(tier => {
+            const issues = validIssues.filter(i => i.slaTier === tier)
+            const stats = getComplianceStatsForIssues(issues)
+            const defaultTol = tier === 'Expedite' ? 10 : 20
+            const tol = currentProject.config?.sla?.tolerances?.resolution?.[tier] ?? defaultTol
+            return {
+                name: tier,
+                resolutionActual: stats.resolution,
+                resolutionTarget: 100 - tol,
+                reactionActual: 0, reactionTarget: 0
+            }
+        })
+
+    const complianceChartData: any[] = [] // Legacy placeholder
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 relative pb-20">
@@ -429,7 +467,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 activeTab === 'overview' && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {/* Legend */}
-                        <SLALegend validIssues={validIssues} />
+                        <SLALegend validIssues={validIssues} config={currentProject.config} />
 
                         {/* Charts */}
                         <SLACharts
@@ -437,6 +475,8 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                             tierStats={tierStats}
                             rejectedStats={rejectedStats}
                             complianceChartData={complianceChartData}
+                            reactionData={reactionChartData}
+                            resolutionData={resolutionChartData}
                             validIssues={validIssues}
                             filteredIssues={filteredIssues}
                             COLORS={COLORS}

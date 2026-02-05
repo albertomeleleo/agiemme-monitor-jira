@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Project, ProjectConfig } from '../../../shared/project-types'
+import { Project, ProjectConfig, SLAGroup } from '../../../shared/project-types'
 import { Button, Input, Card, Typography } from '@design-system'
 
 interface ProjectSettingsModalProps {
@@ -175,55 +175,321 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
                                     <div className="font-bold text-white mb-2 pb-1 border-b border-white/5">{tier}</div>
 
                                     <div>
-                                        <label className="block text-xs text-gray-400 mb-1">Reaction</label>
-                                        <Input
-                                            type="text"
-                                            placeholder="00:00"
-                                            defaultValue={
-                                                typeof config.sla.reactionTime === 'object'
-                                                    ? toHHMM(config.sla.reactionTime[tier] || 0)
-                                                    : (tier === 'Critical' ? toHHMM(config.sla.reactionTime) : '00:00')
-                                            }
-                                            onBlur={e => {
-                                                const mins = fromHHMM(e.target.value)
-                                                // Update valid state on blur to format correctly
-                                                e.target.value = toHHMM(mins)
-
-                                                const currentReactions = typeof config.sla.reactionTime === 'object' ? { ...config.sla.reactionTime } : {}
-                                                setConfig(prev => ({
-                                                    ...prev,
-                                                    sla: {
-                                                        ...prev.sla,
-                                                        reactionTime: { ...currentReactions, [tier]: mins }
+                                        <div className="font-bold text-xs text-gray-500 mb-1 uppercase tracking-wider">Reaction</div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="block text-xs text-gray-400 mb-1">Target (HH:MM)</label>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="00:00"
+                                                    defaultValue={
+                                                        typeof config.sla.reactionTime === 'object'
+                                                            ? toHHMM(config.sla.reactionTime[tier] || 0)
+                                                            : (tier === 'Critical' ? toHHMM(config.sla.reactionTime) : '00:00')
                                                     }
-                                                }))
-                                            }}
-                                            className="w-full font-mono text-sm"
-                                        />
+                                                    onBlur={e => {
+                                                        const mins = fromHHMM(e.target.value)
+                                                        // Update valid state on blur to format correctly
+                                                        e.target.value = toHHMM(mins)
+
+                                                        const currentReactions = typeof config.sla.reactionTime === 'object' ? { ...config.sla.reactionTime } : {}
+                                                        setConfig(prev => ({
+                                                            ...prev,
+                                                            sla: {
+                                                                ...prev.sla,
+                                                                reactionTime: { ...currentReactions, [tier]: mins }
+                                                            }
+                                                        }))
+                                                    }}
+                                                    className="w-full font-mono text-sm"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-400 mb-1">Max Breach %</label>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={100}
+                                                    placeholder="0"
+                                                    defaultValue={config.sla.tolerances?.reaction?.[tier] || 0}
+                                                    onChange={e => {
+                                                        const val = Number(e.target.value)
+                                                        setConfig(prev => ({
+                                                            ...prev,
+                                                            sla: {
+                                                                ...prev.sla,
+                                                                tolerances: {
+                                                                    reaction: { ...(prev.sla.tolerances?.reaction || {}), [tier]: val },
+                                                                    resolution: { ...(prev.sla.tolerances?.resolution || {}) }
+                                                                }
+                                                            }
+                                                        }))
+                                                    }}
+                                                    className="w-full font-mono text-sm"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs text-gray-400 mb-1">Resolution</label>
-                                        <Input
-                                            type="text"
-                                            placeholder="00:00"
-                                            defaultValue={toHHMM(config.sla.resolution[tier] || 0)}
-                                            onBlur={e => {
-                                                const mins = fromHHMM(e.target.value)
-                                                e.target.value = toHHMM(mins)
-                                                setConfig(prev => ({
-                                                    ...prev,
-                                                    sla: {
-                                                        ...prev.sla,
-                                                        resolution: { ...prev.sla.resolution, [tier]: mins }
-                                                    }
-                                                }))
-                                            }}
-                                            className="w-full font-mono text-sm"
-                                        />
+                                        <div className="font-bold text-xs text-gray-500 mb-1 uppercase tracking-wider">Resolution</div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="block text-xs text-gray-400 mb-1">Target (HH:MM)</label>
+                                                <Input
+                                                    type="text"
+                                                    placeholder="00:00"
+                                                    defaultValue={toHHMM(config.sla.resolution[tier] || 0)}
+                                                    onBlur={e => {
+                                                        const mins = fromHHMM(e.target.value)
+                                                        e.target.value = toHHMM(mins)
+                                                        setConfig(prev => ({
+                                                            ...prev,
+                                                            sla: {
+                                                                ...prev.sla,
+                                                                resolution: { ...prev.sla.resolution, [tier]: mins }
+                                                            }
+                                                        }))
+                                                    }}
+                                                    className="w-full font-mono text-sm"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-400 mb-1">Max Breach %</label>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={100}
+                                                    placeholder="0"
+                                                    defaultValue={config.sla.tolerances?.resolution?.[tier] || 0}
+                                                    onChange={e => {
+                                                        const val = Number(e.target.value)
+                                                        setConfig(prev => ({
+                                                            ...prev,
+                                                            sla: {
+                                                                ...prev.sla,
+                                                                tolerances: {
+                                                                    reaction: { ...(prev.sla.tolerances?.reaction || {}) },
+                                                                    resolution: { ...(prev.sla.tolerances?.resolution || {}), [tier]: val }
+                                                                }
+                                                            }
+                                                        }))
+                                                    }}
+                                                    className="w-full font-mono text-sm"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* SLA Aggregations */}
+                    <div className="space-y-6 border-t border-white/10 pt-6">
+                        <div>
+                            <Typography variant="h4" className="text-brand-cyan mb-2">SLA Aggregations</Typography>
+                            <Typography variant="body" className="text-gray-400 text-sm mb-4">Create groups to apply shared tolerances across multiple priorities (e.g., P1 + P2 &le; 5%).</Typography>
+
+                            {/* Reaction Field */}
+                            <div className="mb-6">
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="font-bold text-sm text-gray-300 uppercase tracking-wider">Reaction Time Groups</div>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => {
+                                            const newGroup: SLAGroup = {
+                                                id: crypto.randomUUID(),
+                                                name: 'New Group',
+                                                tiers: [],
+                                                tolerance: 5
+                                            }
+                                            setConfig({
+                                                ...config,
+                                                sla: {
+                                                    ...config.sla,
+                                                    aggregation: {
+                                                        ...config.sla.aggregation,
+                                                        reaction: [...(config.sla.aggregation?.reaction || []), newGroup],
+                                                        resolution: config.sla.aggregation?.resolution || []
+                                                    }
+                                                }
+                                            })
+                                        }}
+                                    >
+                                        + Add Reaction Group
+                                    </Button>
+                                </div>
+                                <div className="space-y-3">
+                                    {(config.sla.aggregation?.reaction || []).map((group, idx) => (
+                                        <div key={group.id || idx} className="bg-brand-deep/30 p-3 rounded border border-white/5">
+                                            <div className="flex gap-3 mb-2">
+                                                <div className="flex-1">
+                                                    <label className="text-xs text-gray-500">Group Name</label>
+                                                    <Input
+                                                        value={group.name}
+                                                        onChange={(e) => {
+                                                            const newGroups = [...(config.sla.aggregation?.reaction || [])]
+                                                            newGroups[idx].name = e.target.value
+                                                            setConfig({ ...config, sla: { ...config.sla, aggregation: { ...config.sla.aggregation!, reaction: newGroups } } })
+                                                        }}
+                                                        fullWidth
+                                                        className="h-8 text-sm"
+                                                    />
+                                                </div>
+                                                <div className="w-24">
+                                                    <label className="text-xs text-gray-500">Max Breach %</label>
+                                                    <Input
+                                                        type="number"
+                                                        value={group.tolerance}
+                                                        onChange={(e) => {
+                                                            const newGroups = [...(config.sla.aggregation?.reaction || [])]
+                                                            newGroups[idx].tolerance = Number(e.target.value)
+                                                            setConfig({ ...config, sla: { ...config.sla, aggregation: { ...config.sla.aggregation!, reaction: newGroups } } })
+                                                        }}
+                                                        fullWidth
+                                                        className="h-8 text-sm"
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const newGroups = (config.sla.aggregation?.reaction || []).filter((_, i) => i !== idx)
+                                                        setConfig({ ...config, sla: { ...config.sla, aggregation: { ...config.sla.aggregation!, reaction: newGroups } } })
+                                                    }}
+                                                    className="text-red-400 hover:text-red-300 px-2 mt-4"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-3">
+                                                {(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']).map(tier => (
+                                                    <label key={tier} className="flex items-center gap-1 text-xs text-gray-300 cursor-pointer hover:text-white">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={group.tiers.includes(tier)}
+                                                            onChange={(e) => {
+                                                                const newGroups = [...(config.sla.aggregation?.reaction || [])]
+                                                                if (e.target.checked) {
+                                                                    newGroups[idx].tiers = [...newGroups[idx].tiers, tier]
+                                                                } else {
+                                                                    newGroups[idx].tiers = newGroups[idx].tiers.filter(t => t !== tier)
+                                                                }
+                                                                setConfig({ ...config, sla: { ...config.sla, aggregation: { ...config.sla.aggregation!, reaction: newGroups } } })
+                                                            }}
+                                                            className="rounded border-gray-600 bg-gray-700 text-brand-cyan"
+                                                        />
+                                                        {tier}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(config.sla.aggregation?.reaction || []).length === 0 && (
+                                        <div className="text-xs text-gray-500 italic p-2 border border-dashed border-white/10 rounded">No aggregations defined. Standard per-tier tolerances apply.</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Resolution Field */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="font-bold text-sm text-gray-300 uppercase tracking-wider">Resolution Groups</div>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => {
+                                            const newGroup: SLAGroup = {
+                                                id: crypto.randomUUID(),
+                                                name: 'New Group',
+                                                tiers: [],
+                                                tolerance: 10
+                                            }
+                                            setConfig({
+                                                ...config,
+                                                sla: {
+                                                    ...config.sla,
+                                                    aggregation: {
+                                                        ...config.sla.aggregation, // reaction might be undefined if not init? No, check
+                                                        reaction: config.sla.aggregation?.reaction || [],
+                                                        resolution: [...(config.sla.aggregation?.resolution || []), newGroup]
+                                                    }
+                                                }
+                                            })
+                                        }}
+                                    >
+                                        + Add Resolution Group
+                                    </Button>
+                                </div>
+                                <div className="space-y-3">
+                                    {(config.sla.aggregation?.resolution || []).map((group, idx) => (
+                                        <div key={group.id || idx} className="bg-brand-deep/30 p-3 rounded border border-white/5">
+                                            <div className="flex gap-3 mb-2">
+                                                <div className="flex-1">
+                                                    <label className="text-xs text-gray-500">Group Name</label>
+                                                    <Input
+                                                        value={group.name}
+                                                        onChange={(e) => {
+                                                            const newGroups = [...(config.sla.aggregation?.resolution || [])]
+                                                            newGroups[idx].name = e.target.value
+                                                            setConfig({ ...config, sla: { ...config.sla, aggregation: { ...config.sla.aggregation!, resolution: newGroups } } })
+                                                        }}
+                                                        fullWidth
+                                                        className="h-8 text-sm"
+                                                    />
+                                                </div>
+                                                <div className="w-24">
+                                                    <label className="text-xs text-gray-500">Max Breach %</label>
+                                                    <Input
+                                                        type="number"
+                                                        value={group.tolerance}
+                                                        onChange={(e) => {
+                                                            const newGroups = [...(config.sla.aggregation?.resolution || [])]
+                                                            newGroups[idx].tolerance = Number(e.target.value)
+                                                            setConfig({ ...config, sla: { ...config.sla, aggregation: { ...config.sla.aggregation!, resolution: newGroups } } })
+                                                        }}
+                                                        fullWidth
+                                                        className="h-8 text-sm"
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const newGroups = (config.sla.aggregation?.resolution || []).filter((_, i) => i !== idx)
+                                                        setConfig({ ...config, sla: { ...config.sla, aggregation: { ...config.sla.aggregation!, resolution: newGroups } } })
+                                                    }}
+                                                    className="text-red-400 hover:text-red-300 px-2 mt-4"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-3">
+                                                {(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']).map(tier => (
+                                                    <label key={tier} className="flex items-center gap-1 text-xs text-gray-300 cursor-pointer hover:text-white">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={group.tiers.includes(tier)}
+                                                            onChange={(e) => {
+                                                                const newGroups = [...(config.sla.aggregation?.resolution || [])]
+                                                                if (e.target.checked) {
+                                                                    newGroups[idx].tiers = [...newGroups[idx].tiers, tier]
+                                                                } else {
+                                                                    newGroups[idx].tiers = newGroups[idx].tiers.filter(t => t !== tier)
+                                                                }
+                                                                setConfig({ ...config, sla: { ...config.sla, aggregation: { ...config.sla.aggregation!, resolution: newGroups } } })
+                                                            }}
+                                                            className="rounded border-gray-600 bg-gray-700 text-brand-cyan"
+                                                        />
+                                                        {tier}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(config.sla.aggregation?.resolution || []).length === 0 && (
+                                        <div className="text-xs text-gray-500 italic p-2 border border-dashed border-white/10 rounded">No aggregations defined. Standard per-tier tolerances apply.</div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 

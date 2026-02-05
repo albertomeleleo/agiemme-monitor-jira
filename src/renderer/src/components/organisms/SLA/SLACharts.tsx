@@ -25,14 +25,21 @@ interface SLAChartsProps {
     chartData: any[]
     tierStats: any[]
     rejectedStats: any[]
-    complianceChartData: any[]
+    complianceChartData: any[] // Legacy/Fallback
+    reactionData?: any[] // New: Aggregated or Tier-specific
+    resolutionData?: any[] // New
     validIssues: SLAIssue[]
     filteredIssues: SLAIssue[]
     COLORS: string[]
 }
 
 export function SLACharts(props: SLAChartsProps): JSX.Element {
-    const { chartData, tierStats, rejectedStats, complianceChartData, validIssues, filteredIssues, COLORS } = props
+    const { chartData, tierStats, rejectedStats, complianceChartData, reactionData, resolutionData, validIssues, filteredIssues, COLORS } = props
+
+    // Use specific data if provided, else fallback to complianceChartData
+    const finalReactionData = reactionData || complianceChartData
+    const finalResolutionData = resolutionData || complianceChartData
+
     return (
         <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -44,8 +51,8 @@ export function SLACharts(props: SLAChartsProps): JSX.Element {
             <TrendCharts issues={validIssues} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <ReactionComplianceChart data={complianceChartData} />
-                <ResolutionComplianceChart data={complianceChartData} />
+                <ReactionComplianceChart data={finalReactionData} />
+                <ResolutionComplianceChart data={finalResolutionData} />
             </div>
 
             <Card variant="glass" className="!p-6 border border-white/10 h-96">

@@ -20,6 +20,12 @@ export interface SLAIssue {
     reactionSLAMet: boolean;
     resolutionSLAMet: boolean;
 
+    // Projected Timers (ISO Dates)
+    projectedReactionBreach?: string;
+    projectedResolutionBreach?: string;
+    isReactionPaused?: boolean;
+    isResolutionPaused?: boolean;
+
     slaTargetResolution: number; // Hours
     slaTargetReaction: number; // Hours (0.25 = 15m)
 
