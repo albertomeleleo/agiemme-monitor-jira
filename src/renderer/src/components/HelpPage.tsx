@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { JiraConfig } from '../../../shared/jira-types'
+import { Typography, Button, Input, Card } from '@design-system'
 
 export function HelpPage(): JSX.Element {
     const [config, setConfig] = useState<JiraConfig>({ host: '', email: '', apiToken: '' })
@@ -37,11 +38,11 @@ export function HelpPage(): JSX.Element {
     const isConfigured = config.host && config.email && config.apiToken
 
     return (
-        <div className="p-8 max-w-4xl mx-auto flex flex-col h-full">
+        <div className="p-8 max-w-5xl mx-auto flex flex-col h-full overflow-y-auto custom-scrollbar">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2">Help & Settings</h1>
-                <p className="text-brand-text-sec">Configure your Jira integration and read the user manual.</p>
+            <div className="mb-8 p-6 glass-panel rounded-2xl border border-gray-200 dark:border-white/10 bg-brand-deep/30">
+                <Typography variant="h1" className="text-brand-text-pri mb-2">Help & Manual</Typography>
+                <Typography variant="body" className="text-brand-text-sec">Configure your Jira integration and read the user manual.</Typography>
             </div>
 
             {/* Tab Navigation */}
@@ -66,13 +67,14 @@ export function HelpPage(): JSX.Element {
             {activeTab === 'settings' && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {/* Jira Configuration */}
-                    <section className="glass-panel rounded-xl p-6 border border-white/10">
-                        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <Card variant="glass" className="border border-gray-200 dark:border-white/10">
+                        <Typography variant="h3" className="text-brand-text-pri mb-6 flex items-center gap-2">
                             🔑 Jira Configuration
-                        </h2>
+                        </Typography>
 
+                        {/* Error/Warning */}
                         {!isConfigured && (
-                            <div className="mb-6 bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg text-yellow-200 text-sm flex items-start gap-3">
+                            <div className="mb-6 bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg text-yellow-600 dark:text-yellow-200 text-sm flex items-start gap-3">
                                 <span className="text-xl">⚠️</span>
                                 <div>
                                     <p className="font-bold">Missing Configuration</p>
@@ -83,86 +85,83 @@ export function HelpPage(): JSX.Element {
 
                         <div className="space-y-4 max-w-xl">
                             <div>
-                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Jira Host URL</label>
-                                <input
-                                    type="text"
+                                <Typography variant="caption" className="font-bold text-brand-text-sec uppercase mb-1 block">Jira Host URL</Typography>
+                                <Input
+                                    fullWidth
                                     placeholder="https://your-domain.atlassian.net"
-                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-3 border border-white/10 focus:ring-0 focus:border-brand-cyan outline-none transition-all placeholder:text-gray-600"
                                     value={config.host}
                                     onChange={e => setConfig(prev => ({ ...prev, host: e.target.value }))}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">Email</label>
-                                <input
-                                    type="text"
+                                <Typography variant="caption" className="font-bold text-brand-text-sec uppercase mb-1 block">Email</Typography>
+                                <Input
+                                    fullWidth
                                     placeholder="email@example.com"
-                                    className="w-full bg-brand-deep/50 glass-panel text-white rounded p-3 border border-white/10 focus:ring-0 focus:border-brand-cyan outline-none transition-all placeholder:text-gray-600"
                                     value={config.email}
                                     onChange={e => setConfig(prev => ({ ...prev, email: e.target.value }))}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-brand-text-sec uppercase mb-1">API Token</label>
-                                <div className="relative">
-                                    <input
-                                        type="password"
-                                        placeholder="••••••••••••••••"
-                                        className="w-full bg-brand-deep/50 glass-panel text-white rounded p-3 border border-white/10 focus:ring-0 focus:border-brand-cyan outline-none transition-all placeholder:text-gray-600"
-                                        value={config.apiToken}
-                                        onChange={e => setConfig(prev => ({ ...prev, apiToken: e.target.value }))}
-                                    />
-                                </div>
+                                <Typography variant="caption" className="font-bold text-brand-text-sec uppercase mb-1 block">API Token</Typography>
+                                <Input
+                                    fullWidth
+                                    type="password"
+                                    placeholder="••••••••••••••••"
+                                    value={config.apiToken}
+                                    onChange={e => setConfig(prev => ({ ...prev, apiToken: e.target.value }))}
+                                />
                             </div>
 
                             {message && (
-                                <div className={`p-3 rounded text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-300 border border-green-500/20' : 'bg-red-500/10 text-red-300 border border-red-500/20'}`}>
+                                <div className={`p-3 rounded text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-700 dark:text-green-300 border border-green-500/20' : 'bg-red-500/10 text-red-700 dark:text-red-300 border border-red-500/20'}`}>
                                     {message.text}
                                 </div>
                             )}
 
                             <div className="pt-2">
-                                <button
+                                <Button
                                     disabled={loading}
                                     onClick={handleSave}
-                                    className="px-6 py-2 bg-brand-cyan text-brand-deep disabled:opacity-50 rounded-lg font-bold transition-all hover:brightness-110"
+                                    variant="primary"
+                                    className="px-8"
                                 >
                                     {loading ? 'Verifying...' : 'Save & Verify'}
-                                </button>
+                                </Button>
                             </div>
                         </div>
-                    </section>
+                    </Card>
 
                     {/* Instructions */}
                     <section className="space-y-6">
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Typography variant="h3" className="text-brand-text-pri flex items-center gap-2">
                             📚 How to generate a Jira API Token
-                        </h2>
+                        </Typography>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="glass-panel p-6 rounded-xl border border-white/10">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <Card variant="glass" className="border border-gray-200 dark:border-white/10">
                                 <div className="w-8 h-8 bg-brand-cyan/20 text-brand-cyan rounded-full flex items-center justify-center font-bold mb-4 border border-brand-cyan/30">1</div>
-                                <h3 className="font-bold text-white mb-2">Go to Atlassian Account Settings</h3>
-                                <p className="text-brand-text-sec text-sm">
-                                    Log in to your Jira account and go to <a href="#" onClick={() => window.open('https://id.atlassian.com/manage-profile/security/api-tokens')} className="text-brand-cyan hover:underline">Security Settings</a>.
-                                </p>
-                            </div>
+                                <Typography variant="body" className="font-bold text-brand-text-pri mb-2">Atlassian Profile</Typography>
+                                <Typography variant="caption" className="text-brand-text-sec">
+                                    Log in to your account and go to <a href="#" onClick={(e) => { e.preventDefault(); window.open('https://id.atlassian.com/manage-profile/security/api-tokens') }} className="text-brand-cyan hover:underline">Security Settings</a>.
+                                </Typography>
+                            </Card>
 
-                            <div className="glass-panel p-6 rounded-xl border border-white/10">
+                            <Card variant="glass" className="border border-gray-200 dark:border-white/10">
                                 <div className="w-8 h-8 bg-brand-cyan/20 text-brand-cyan rounded-full flex items-center justify-center font-bold mb-4 border border-brand-cyan/30">2</div>
-                                <h3 className="font-bold text-white mb-2">Create API Token</h3>
-                                <p className="text-brand-text-sec text-sm">
-                                    Click <strong>Create and manage API tokens</strong>, then click <strong>Create API token</strong>. Give it a label (e.g., "Release Analyzer").
-                                </p>
-                            </div>
+                                <Typography variant="body" className="font-bold text-brand-text-pri mb-2">Create Token</Typography>
+                                <Typography variant="caption" className="text-brand-text-sec">
+                                    Click <strong>Create API token</strong>. Give it a label (e.g., "Release Analyzer").
+                                </Typography>
+                            </Card>
 
-                            <div className="glass-panel p-6 rounded-xl border border-white/10">
+                            <Card variant="glass" className="border border-gray-200 dark:border-white/10">
                                 <div className="w-8 h-8 bg-brand-cyan/20 text-brand-cyan rounded-full flex items-center justify-center font-bold mb-4 border border-brand-cyan/30">3</div>
-                                <h3 className="font-bold text-white mb-2">Copy & Paste</h3>
-                                <p className="text-brand-text-sec text-sm">
+                                <Typography variant="body" className="font-bold text-brand-text-pri mb-2">Copy & Paste</Typography>
+                                <Typography variant="caption" className="text-brand-text-sec">
                                     Copy the generated token and paste it into the <strong>API Token</strong> field above.
-                                </p>
-                            </div>
+                                </Typography>
+                            </Card>
                         </div>
                     </section>
                 </div>
@@ -170,62 +169,100 @@ export function HelpPage(): JSX.Element {
 
             {/* CONTENT: USER MANUAL */}
             {activeTab === 'manual' && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto pb-12 pr-4 custom-scrollbar">
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-visible pb-12 pr-4">
 
-                    <section className="glass-panel rounded-xl p-6 border border-white/10">
-                        <h2 className="text-xl font-bold text-white mb-4">1. Getting Started</h2>
-                        <p className="text-brand-text-sec mb-4">Welcome to the <strong>Release Analyzer</strong>. This application helps you track software releases and analyze Service Level Agreement (SLA) compliance based on Jira data.</p>
-                        <h3 className="font-bold text-brand-cyan mb-2">Launching the App</h3>
-                        <p className="text-brand-text-sec text-sm">Open the application from your desktop or Applications folder. Upon launch, you will see the main dashboard where you can create or select a project.</p>
-                    </section>
+                    <Card variant="glass" className="border border-gray-200 dark:border-white/10">
+                        <Typography variant="h3" className="text-brand-text-pri mb-4">1. Getting Started</Typography>
+                        <Typography variant="body" className="text-brand-text-sec mb-4">
+                            Welcome to the <strong>Release Analyzer</strong>. This application helps you track software releases and analyze Service Level Agreement (SLA) compliance based on Jira data.
+                        </Typography>
+                        <Typography variant="body" className="font-bold text-brand-cyan mb-2">Launching the App</Typography>
+                        <Typography variant="caption" className="text-brand-text-sec">
+                            Open the application from your desktop or Applications folder. Upon launch, you will see the main dashboard where you can create or select a project from the sidebar.
+                        </Typography>
+                    </Card>
 
-                    <section className="glass-panel rounded-xl p-6 border border-white/10">
-                        <h2 className="text-xl font-bold text-white mb-4">2. Managing Projects</h2>
-                        <h3 className="font-bold text-brand-cyan mb-2">Creating a Project</h3>
-                        <ol className="list-decimal list-inside text-brand-text-sec text-sm space-y-1 mb-4">
-                            <li>Click the <strong>+ New Project</strong> button in the sidebar.</li>
-                            <li>Enter a unique project name (e.g., "MyProject 2026").</li>
+                    <Card variant="glass" className="border border-gray-200 dark:border-white/10">
+                        <Typography variant="h3" className="text-brand-text-pri mb-4">2. Managing Projects</Typography>
+                        <Typography variant="body" className="font-bold text-brand-cyan mb-2">Creating a Project</Typography>
+                        <ol className="list-decimal list-inside text-brand-text-sec text-sm space-y-2 mb-6">
+                            <li>Click the <strong className="text-brand-text-pri">+ New Project</strong> button in the sidebar.</li>
+                            <li>Enter a unique project name (e.g., "Main Project 2026").</li>
                             <li>Press Enter or click "Create".</li>
                         </ol>
-                        <h3 className="font-bold text-brand-cyan mb-2">Importing Data</h3>
-                        <p className="text-brand-text-sec text-sm mb-2">You can import data in two ways:</p>
-                        <ul className="list-disc list-inside text-brand-text-sec text-sm space-y-1">
-                            <li><strong>CSV Upload</strong>: Click the "Upload" icon in the top right to import a standard release file.</li>
-                            <li><strong>Jira Import</strong>: Use the "Import from Jira" button in the sidebar to fetch data directly (requires API Token).</li>
+                        <Typography variant="body" className="font-bold text-brand-cyan mb-2">Importing Data</Typography>
+                        <Typography variant="caption" className="text-brand-text-sec block mb-2">You can import data in two ways:</Typography>
+                        <ul className="list-disc list-inside text-brand-text-sec text-sm space-y-2">
+                            <li><strong className="text-brand-text-pri">CSV Upload</strong>: Click the "Upload" card in the dashboard to import a standard release export.</li>
+                            <li><strong className="text-brand-text-pri">Jira Import</strong>: Use the "Import from Jira" button to fetch live data (requires API Configuration in Settings).</li>
                         </ul>
-                    </section>
+                    </Card>
 
-                    <section className="glass-panel rounded-xl p-6 border border-white/10">
-                        <h2 className="text-xl font-bold text-white mb-4">3. SLA Dashboard</h2>
-                        <p className="text-brand-text-sec mb-4">Access it by clicking <strong>⏱️ SLA Dashboard</strong> in the sidebar.</p>
+                    <Card variant="glass" className="border border-gray-200 dark:border-white/10">
+                        <Typography variant="h3" className="text-brand-text-pri mb-4">3. SLA Dashboard</Typography>
+                        <Typography variant="body" className="text-brand-text-sec mb-4">
+                            Access the dashboard by selecting a project and clicking <strong>⏱️ SLA Dashboard</strong> in the sidebar submenu.
+                        </Typography>
 
                         <div className="bg-brand-cyan/10 p-4 rounded-lg border-l-4 border-brand-cyan mb-6">
-                            <strong className="text-brand-cyan">Tip:</strong> <span className="text-brand-text-sec text-sm">The dashboard automatically filters data for the <strong>Current Month</strong> by default.</span>
+                            <Typography variant="body" className="text-brand-cyan font-bold">💡 Tip</Typography>
+                            <Typography variant="caption" className="text-brand-text-sec">
+                                The dashboard automatically filters data for the <strong>Current Month</strong>. You can change the period using the selector in the top-left area.
+                            </Typography>
                         </div>
 
-                        <h3 className="font-bold text-brand-cyan mb-2">Tab Navigation</h3>
-                        <ul className="list-disc list-inside text-brand-text-sec text-sm space-y-1 mb-4">
-                            <li><strong>📊 Overview</strong>: Visual charts and high-level statistics.</li>
-                            <li><strong>📋 Issue List</strong>: A detailed table of every analyzed issue.</li>
+                        <Typography variant="body" className="font-bold text-brand-cyan mb-2">Tab Navigation</Typography>
+                        <ul className="list-disc list-inside text-brand-text-sec text-sm space-y-2 mb-6">
+                            <li><strong>📊 Overview</strong>: High-level visual statistics, compliance percentages, and volume charts.</li>
+                            <li><strong>📋 Issue List</strong>: Detailed table showing individual SLA calculations (Reaction/Resolution).</li>
                         </ul>
 
-                        <h3 className="font-bold text-brand-cyan mb-2">Understanding the Charts</h3>
-                        <ul className="list-disc list-inside text-brand-text-sec text-sm space-y-1">
-                            <li><strong>Compliance Overview</strong>: % of issues that met vs. missed targets.</li>
-                            <li><strong>SLA by Tier</strong>: Breakdown by priority (Critical, Major, etc.).</li>
-                            <li><strong>Throughput Analysis</strong>: Volume of open vs. closed issues over time.</li>
-                            <li><strong>Release History</strong>: Timeline of releases.</li>
-                        </ul>
-                    </section>
-
-                    <section className="glass-panel rounded-xl p-6 border border-white/10">
-                        <h2 className="text-xl font-bold text-white mb-4">4. Troubleshooting</h2>
+                        <Typography variant="body" className="font-bold text-brand-cyan mb-2">Understanding Charts</Typography>
                         <ul className="list-disc list-inside text-brand-text-sec text-sm space-y-2">
-                            <li><strong>"Invalid CSV Format"</strong>: Ensure headers: <code>Issue key</code>, <code>Summary</code>, <code>Created</code>, <code>Resolved</code>, <code>Priority</code>.</li>
-                            <li><strong>"No Data Shown"</strong>: Check your filters (Month/Priority).</li>
-                            <li><strong>Charts look empty</strong>: Try uploading a fresh file.</li>
+                            <li><strong>Compliance Overview</strong>: Pie chart of met vs. missed SLA targets.</li>
+                            <li><strong>SLA by Tier</strong>: Performance breakdown per priority level.</li>
+                            <li><strong>Throughput Analysis</strong>: Trend of open vs. closed issues over time.</li>
                         </ul>
-                    </section>
+                    </Card>
+
+                    <Card variant="glass" className="border border-gray-200 dark:border-white/10">
+                        <Typography variant="h3" className="text-brand-text-pri mb-4">4. Issue Analysis</Typography>
+                        <Typography variant="body" className="text-brand-text-sec mb-4">
+                            Switch to the <strong>Issue List</strong> tab for granular details. Each row shows:
+                        </Typography>
+                        <ul className="list-disc list-inside text-brand-text-sec text-sm space-y-2 mb-4">
+                            <li><strong>Key</strong>: Clickable Jira Issue Reference.</li>
+                            <li><strong>Reaction Time</strong>: Time from "Open" to "In Progress".</li>
+                            <li><strong>Resolution Time</strong>: Net working time from "Open" to "Done", excluding Pause states.</li>
+                        </ul>
+                        <div className="bg-brand-deep/50 p-3 rounded-lg border border-gray-200 dark:border-white/10 italic text-xs text-brand-text-sec">
+                            🔍 <strong>Pro Tip:</strong> Click the small arrow on any row to expand the <strong>Changelog History</strong> and see exactly when and how the issue moved.
+                        </div>
+                    </Card>
+
+                    <Card variant="glass" className="border border-gray-200 dark:border-white/10">
+                        <Typography variant="h3" className="text-brand-text-pri mb-4">5. Troubleshooting</Typography>
+                        <div className="space-y-4">
+                            <div>
+                                <Typography variant="body" className="font-bold text-brand-text-pri">"Invalid CSV Format"</Typography>
+                                <Typography variant="caption" className="text-brand-text-sec">
+                                    Ensure headers are exactly: <code>Issue key</code>, <code>Summary</code>, <code>Created</code>, <code>Resolved</code>, <code>Priority</code>.
+                                </Typography>
+                            </div>
+                            <div>
+                                <Typography variant="body" className="font-bold text-brand-text-pri">"No Data Shown"</Typography>
+                                <Typography variant="caption" className="text-brand-text-sec">
+                                    Check your filters. The default view is restricted to the current month.
+                                </Typography>
+                            </div>
+                            <div>
+                                <Typography variant="body" className="font-bold text-brand-text-pri">"Connection Failed"</Typography>
+                                <Typography variant="caption" className="text-brand-text-sec">
+                                    Verify your Jira Host URL and API Token in the <strong>Settings</strong> tab.
+                                </Typography>
+                            </div>
+                        </div>
+                    </Card>
                 </div>
             )}
         </div>

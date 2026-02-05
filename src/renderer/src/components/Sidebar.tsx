@@ -9,8 +9,8 @@ interface SidebarProps {
     onSelectProject: (project: Project) => void
     onCreateProject: (name: string) => void
     onRefresh: () => void
-    currentView?: 'releases' | 'sla'
-    onSelectView?: (view: 'releases' | 'sla') => void
+    currentView?: 'releases' | 'sla' | 'help'
+    onSelectView?: (view: 'releases' | 'sla' | 'help') => void
 }
 
 export function Sidebar({ projects, currentProject, onSelectProject, onCreateProject, currentView = 'releases', onSelectView }: SidebarProps): JSX.Element {
@@ -114,16 +114,19 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
             </div>
 
 
-            {/* Help Button (Moved from global nav to bottom) */}
+            {/* Help Button */}
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-                {/* Note: In the new design, help might be separate, but I'll leave it implicitly accessible or add a button if user requested. 
-                    The App.tsx has a HelpPage but no way to navigate to it now that I removed "Help" button from Sidebar? 
-                    Actually, App.tsx rendered HelpPage only when currentSection === 'help'.
-                    My new Sidebar removed the 'help' button. 
-                    I should add a Help button in the Sidebar or Header.
-                    For now, I'll keep Sidebar focused on projects as requested.
-                 */}
-                <div className="mt-2 text-center">
+                <button
+                    onClick={() => onSelectView?.('help')}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${currentView === 'help'
+                        ? 'bg-brand-cyan/10 text-brand-cyan border-l-2 border-brand-cyan'
+                        : 'text-brand-text-sec hover:text-brand-text-pri hover:bg-brand-card/50'
+                        }`}
+                >
+                    <span role="img" aria-hidden="true" className="text-base">📖</span>
+                    <span>Help & Manual</span>
+                </button>
+                <div className="mt-4 text-center">
                     <span className="text-xs text-brand-text-sec">v1.2.0</span>
                 </div>
             </div>

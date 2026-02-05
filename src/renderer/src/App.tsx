@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar'
 import { ReleaseDetail } from './components/ReleaseDetail'
 import { SLADashboard } from './components/SLADashboard'
 import { ProjectSettingsModal } from './components/ProjectSettingsModal'
+import { HelpPage } from './components/HelpPage'
 
 
 import { ReleaseCard } from './components/ReleaseCard'
@@ -26,7 +27,7 @@ function AppContent(): JSX.Element {
     const [releases, setReleases] = useState<ReleaseData[]>([])
     const [loading, setLoading] = useState(false)
     const [viewMode, setViewMode] = useState<ViewMode>('cards')
-    const [projectView, setProjectView] = useState<'releases' | 'sla'>('releases')
+    const [projectView, setProjectView] = useState<'releases' | 'sla' | 'help'>('releases')
 
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedRelease, setSelectedRelease] = useState<ReleaseData | null>(null)
@@ -155,8 +156,8 @@ function AppContent(): JSX.Element {
                     onSelectView={setProjectView}
                     onRefresh={() => { }}
                     onSelectProject={(p) => {
-                        if (p.name !== currentProject?.name) {
-                            setCurrentProject(p)
+                        setCurrentProject(p)
+                        if (projectView === 'help' || p.name !== currentProject?.name) {
                             setProjectView('releases')
                         }
                     }}
@@ -167,7 +168,9 @@ function AppContent(): JSX.Element {
             <main className="flex-1 flex flex-col h-screen overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-6 relative">
 
-                    {currentProject ? (
+                    {projectView === 'help' ? (
+                        <HelpPage />
+                    ) : currentProject ? (
                         <>
                             {/* HEADER */}
                             <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -338,7 +341,7 @@ function AppContent(): JSX.Element {
                             </div>
                             <Typography variant="h2" className="text-brand-text-pri mb-2">Welcome to Release Analyzer</Typography>
                             <Typography variant="body" className="text-gray-400 max-w-md">
-                                Select a project from the sidebar or create a new one to start.
+                                Select a project from the sidebar or click "Help & Manual" to learn more.
                             </Typography>
                         </div>
                     )}
