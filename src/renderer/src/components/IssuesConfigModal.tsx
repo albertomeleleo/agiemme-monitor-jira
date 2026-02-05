@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Modal, Input, Button, Typography, Card, Select } from '@design-system'
 
 interface IssuesConfigModalProps {
@@ -34,21 +34,28 @@ export function IssuesConfigModal({ currentConfig, onClose, onSave }: IssuesConf
     const [targetStatus, setTargetStatus] = useState(currentConfig.targetStatus || 'Done')
     const [targetPriorities, setTargetPriorities] = useState(currentConfig.targetPriorities ? currentConfig.targetPriorities.join(', ') : 'Critical, High')
     const [jql, setJql] = useState(currentConfig.jql || 'created >= -30d ORDER BY created DESC')
+    const [testStatus, setTestStatus] = useState<{ success: boolean; msg: string } | null>(null)
+    const [testing, setTesting] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [projects, setProjects] = useState<any[]>([])
-    const [selectedProject, setSelectedProject] = useState('')
 
-    useEffect(() => {
-        // Fetch projects
-        window.api.jiraGetProjects()
-            .then(setProjects)
-            .catch(console.error)
-    }, [])
+    const handleTestNotification = async () => {
+        setTesting(true)
+        setTestStatus(null)
+        try {
+            const config = provider === 'whatsapp'
+                ? { whatsappPhone: phone, whatsappApiKey: apiKey }
+                : { telegramBotToken: botToken, telegramChatId: chatId }
 
-    const handleProjectChange = (projectKey: string) => {
-        setSelectedProject(projectKey)
-        if (projectKey) {
-            setJql(`project = "${projectKey}" AND created >= -30d ORDER BY created DESC`)
+            const res = await window.api.testNotification(provider, config)
+            if (res.success) {
+                setTestStatus({ success: true, msg: 'Test notification sent!' })
+            } else {
+                setTestStatus({ success: false, msg: res.error || 'Failed to send test.' })
+            }
+        } catch (e: any) {
+            setTestStatus({ success: false, msg: e.message })
+        } finally {
+            setTesting(false)
         }
     }
 
@@ -86,19 +93,6 @@ export function IssuesConfigModal({ currentConfig, onClose, onSave }: IssuesConf
                     <Typography variant="h3" className="mb-2">Sync Configuration</Typography>
                     <Card variant="glass" className="p-4 space-y-4">
                         <div>
-                            <Typography variant="caption" className="block mb-1 font-bold uppercase">Select Project</Typography>
-                            <Select
-                                fullWidth
-                                value={selectedProject}
-                                onChange={e => handleProjectChange(e.target.value)}
-                            >
-                                <option value="">-- Custom JQL --</option>
-                                {projects.map(p => (
-                                    <option key={p.id} value={p.key}>{p.name} ({p.key})</option>
-                                ))}
-                            </Select>
-                        </div>
-                        <div>
                             <Typography variant="caption" className="block mb-1 font-bold uppercase">JQL Query</Typography>
                             <Input
                                 fullWidth
@@ -113,17 +107,34 @@ export function IssuesConfigModal({ currentConfig, onClose, onSave }: IssuesConf
                 <div>
                     <Typography variant="h3" className="mb-2">Notifications</Typography>
                     <Card variant="glass" className="p-4 space-y-4">
-                        <div>
-                            <Typography variant="caption" className="block mb-1 font-bold uppercase">Provider</Typography>
-                            <Select
-                                fullWidth
-                                value={provider}
-                                onChange={e => setProvider(e.target.value as any)}
+                        <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                                <Typography variant="caption" className="block mb-1 font-bold uppercase">Provider</Typography>
+                                <Select
+                                    fullWidth
+                                    value={provider}
+                                    onChange={e => setProvider(e.target.value as any)}
+                                >
+                                    <option value="whatsapp">WhatsApp (CallMeBot)</option>
+                                    <option value="telegram">Telegram</option>
+                                </Select>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleTestNotification}
+                                isLoading={testing}
+                                disabled={provider === 'whatsapp' ? (!phone || !apiKey) : (!botToken || !chatId)}
                             >
-                                <option value="whatsapp">WhatsApp (CallMeBot)</option>
-                                <option value="telegram">Telegram</option>
-                            </Select>
+                                Test
+                            </Button>
                         </div>
+
+                        {testStatus && (
+                            <div className={`text-xs p-2 rounded border ${testStatus.success ? 'bg-green-900/20 border-green-900/50 text-green-400' : 'bg-red-900/20 border-red-900/50 text-red-400'}`}>
+                                {testStatus.msg}
+                            </div>
+                        )}
 
                         {provider === 'whatsapp' ? (
                             <>

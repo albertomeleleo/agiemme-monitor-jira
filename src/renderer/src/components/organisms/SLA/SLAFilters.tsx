@@ -18,6 +18,7 @@ interface SLAFiltersProps {
     onIssueTypeChange: (type: string) => void
     issueTypes: { raw: string, label: string }[]
     onReset: () => void
+    onExport: () => void
     onRefresh?: () => void
     isRefreshing?: boolean
 }
@@ -40,6 +41,7 @@ export function SLAFilters({
     onIssueTypeChange,
     issueTypes,
     onReset,
+    onExport,
     onRefresh,
     isRefreshing
 }: SLAFiltersProps): JSX.Element {
@@ -141,6 +143,12 @@ export function SLAFilters({
                         {isRefreshing ? 'Refreshing...' : 'Sync Jira'}
                     </button>
                 )}
+                <button
+                    onClick={onExport}
+                    className="flex items-center gap-2 text-xs text-brand-cyan hover:text-white font-medium border border-brand-cyan/30 px-3 py-1.5 rounded-lg hover:bg-brand-cyan/20 transition-all"
+                >
+                    <span>📥</span> Export CSV
+                </button>
                 <button
                     onClick={onReset}
                     className="flex items-center gap-2 text-xs text-red-400 hover:text-red-300 font-medium border border-red-900/50 px-3 py-1.5 rounded-lg hover:bg-red-900/20 transition-colors"

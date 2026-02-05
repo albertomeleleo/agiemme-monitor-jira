@@ -193,6 +193,48 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         setHoveredIssue(null)
     }
 
+    const handleExport = async () => {
+        if (!filteredIssues.length) return
+
+        const headers = [
+            'Key', 'Issue Type', 'Priority', 'Status', 'Created', 'Resolution Date',
+            'SLA Tier', 'Reaction Time (min)', 'Reaction SLA Met',
+            'Resolution Time (min)', 'Resolution SLA Met', 'Time in Pause (min)',
+            'SLA Target Reaction', 'SLA Target Resolution'
+        ]
+
+        const rows = filteredIssues.map(i => [
+            i.key,
+            i.issueType,
+            i.priority,
+            i.status,
+            i.created,
+            i.resolutionDate || '',
+            i.slaTier,
+            i.reactionTime,
+            i.reactionSLAMet ? 'YES' : 'NO',
+            i.resolutionTime,
+            i.resolutionSLAMet ? 'YES' : 'NO',
+            i.timeInPause,
+            i.slaTargetReaction,
+            i.slaTargetResolution
+        ])
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n')
+
+        const filename = `SLA_Export_${currentProject.name}_${new Date().toISOString().split('T')[0]}.csv`
+        const success = await window.api.saveFile(currentProject.name, filename, csvContent)
+
+        if (success) {
+            alert(`Exported to Documents/ReleaseAnalyzer/${currentProject.name}/${filename}`)
+        } else {
+            alert('Export failed.')
+        }
+    }
+
     const uniqueMonths = (issues: any[]): string[] => {
         const months = new Set<string>()
         issues.forEach(i => {
@@ -378,6 +420,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                 onIssueTypeChange={setSelectedIssueType}
                 issueTypes={issueTypes}
                 onReset={handleReset}
+                onExport={handleExport}
                 onRefresh={lastJql ? handleRefresh : undefined}
                 isRefreshing={loading}
             />

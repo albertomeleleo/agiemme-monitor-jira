@@ -1,6 +1,4 @@
-import { join } from 'path'
-import { readFile, writeFile, mkdir } from 'fs/promises'
-import { app } from 'electron'
+import { storageService } from './storage-service'
 
 export interface MonitoredIssue {
     key: string
@@ -21,6 +19,7 @@ export interface IssueDatabase {
     // Automation
     pollInterval?: number
     targetStatus?: string
+    targetPriorities?: string[]
 
     // Notifications
     notificationProvider?: 'whatsapp' | 'telegram'
@@ -31,30 +30,17 @@ export interface IssueDatabase {
 }
 
 class IssuesDB {
-    private getPath(projectName: string) {
-        return join(app.getPath('documents'), 'ReleaseAnalyzer', projectName, 'issues.json')
-    }
-
     async getDB(projectName: string): Promise<IssueDatabase> {
-        try {
-            const path = this.getPath(projectName)
-            const content = await readFile(path, 'utf-8')
-            return JSON.parse(content)
-        } catch (e) {
-            return {
-                projectKey: '',
-                jql: 'created >= -30d ORDER BY created DESC',
-                issues: [],
-                lastSync: 0
-            }
-        }
+        return storageService.getProjectData<IssueDatabase>(projectName, 'issues', {
+            projectKey: '',
+            jql: 'created >= -30d ORDER BY created DESC',
+            issues: [],
+            lastSync: 0
+        })
     }
 
     async saveDB(projectName: string, db: IssueDatabase): Promise<void> {
-        const path = this.getPath(projectName)
-        // Ensure dir exists (it should, but just in case)
-        await mkdir(join(app.getPath('documents'), 'ReleaseAnalyzer', projectName), { recursive: true })
-        await writeFile(path, JSON.stringify(db, null, 2))
+        await storageService.setProjectData(projectName, 'issues', db)
     }
 
     async updateIssues(projectName: string, newIssues: any[], jql?: string): Promise<IssueDatabase> {

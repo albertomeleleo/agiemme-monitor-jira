@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Card, Badge, Typography, IssueStatusBadge } from '@design-system'
 import { SLAIssue } from '../../../../../shared/sla-types'
 import { formatDuration } from './utils'
@@ -9,8 +9,12 @@ interface SLATableProps {
     onHoverIssue: (issue: SLAIssue | null, x: number, y: number) => void
 }
 
+const PAGE_SIZE = 30
+
 export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps): JSX.Element {
     const [expandedIssues, setExpandedIssues] = useState<Set<string>>(new Set())
+    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+    const observerTarget = useRef<HTMLDivElement>(null)
 
     const toggleExpand = (e: React.MouseEvent, key: string) => {
         e.stopPropagation()
@@ -23,16 +27,48 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
         setExpandedIssues(newSet)
     }
 
+    // Reset visibility when issues change (e.g. filtering)
+    useEffect(() => {
+        setVisibleCount(PAGE_SIZE)
+    }, [issues])
+
+    // Intersection Observer for Infinite Scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && visibleCount < issues.length) {
+                    setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, issues.length))
+                }
+            },
+            { threshold: 0.1 }
+        )
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current)
+        }
+
+        return () => observer.disconnect()
+    }, [visibleCount, issues.length])
+
+    const visibleIssues = useMemo(() => issues.slice(0, visibleCount), [issues, visibleCount])
+
     return (
         <Card variant="glass" className="!p-0 border border-white/10 overflow-hidden">
             <div className="p-6 border-b border-white/10 flex justify-between items-center bg-brand-deep/30">
-                <Typography variant="h3" className="text-white font-bold text-lg">Analysis Details</Typography>
-
+                <div className="flex items-center gap-4">
+                    <Typography variant="h3" className="text-white font-bold text-lg">Analysis Details</Typography>
+                    <Badge variant="neutral" label={`${issues.length} Issues`} />
+                </div>
+                {visibleCount < issues.length && (
+                    <Typography variant="caption" className="text-gray-400">
+                        Showing {visibleCount} of {issues.length}
+                    </Typography>
+                )}
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <table className="w-full text-left text-sm text-brand-text-sec">
                     <caption className="sr-only">Jira issues SLA analysis details, including reaction and resolution times</caption>
-                    <thead className="bg-brand-deep/80 text-white uppercase font-medium">
+                    <thead className="bg-brand-deep/80 text-white uppercase font-medium sticky top-0 z-10 backdrop-blur-md">
                         <tr>
                             <th className="px-6 py-4 w-10" scope="col"></th>
                             <th className="px-6 py-4" scope="col">Key</th>
@@ -41,7 +77,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                             <th className="px-6 py-4 text-center border-l border-white/10" scope="col">Reaction (Target: 00:15)</th>
                             <th className="px-6 py-4 text-center border-l border-white/10" colSpan={3} scope="col">Resolution (hh:mm:ss)</th>
                         </tr>
-                        <tr className="bg-brand-deep/30 text-[10px] text-gray-400">
+                        <tr className="bg-brand-deep/30 text-[10px] text-gray-400 sticky top-[52px] z-10 backdrop-blur-md">
                             <th className="px-6 py-2" scope="col"></th>
                             <th className="px-6 py-2" scope="col"></th>
                             <th className="px-6 py-2" scope="col"></th>
@@ -53,7 +89,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700">
-                        {issues.map((issue) => {
+                        {visibleIssues.map((issue) => {
                             const isRejected = issue.status.toLowerCase() === 'rejected'
                             const isExpanded = expandedIssues.has(issue.key)
                             return (
@@ -201,6 +237,16 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                         })}
                     </tbody>
                 </table>
+                {visibleCount < issues.length && (
+                    <div ref={observerTarget} className="p-8 flex justify-center border-t border-white/5 bg-brand-deep/20">
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-6 h-6 border-2 border-brand-cyan border-t-transparent rounded-full animate-spin"></div>
+                            <Typography variant="caption" className="text-brand-cyan font-bold tracking-widest uppercase">
+                                Loading More {issues.length - visibleCount} issues...
+                            </Typography>
+                        </div>
+                    </div>
+                )}
             </div>
         </Card>
     )

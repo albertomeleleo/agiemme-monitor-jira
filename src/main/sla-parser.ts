@@ -420,8 +420,6 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         const reactionMet = reactionMinutes <= (targetReact + 0.001)
 
         // Update Effective Creation Date if mapped
-        const finalCreatedStr = effectiveCreated.toISOString()
-
         parsedIssues.push({
             key,
             summary,
@@ -429,7 +427,7 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
             priority,
             issueType,
             slaTier,
-            created: effectiveCreated, // Override with custom creation date
+            created: effectiveCreated.toISOString(), // Override with custom creation date string
             resolutionDate: tDone ? new Date(tDone).toISOString() : (fields.resolutiondate || undefined),
             reactionTime: parseFloat(reactionMinutes.toFixed(2)),
             resolutionTime: parseFloat(workingTime.toFixed(2)),

@@ -1,15 +1,5 @@
-import Store from 'electron-store'
+import { storageService } from './storage-service'
 import { JiraConfig, JiraProject, JiraVersion, JiraIssue } from '../../shared/jira-types'
-
-const store = new Store<{ jira: JiraConfig }>({
-    defaults: {
-        jira: {
-            host: '',
-            email: '',
-            apiToken: ''
-        }
-    }
-})
 
 export class JiraService {
     private getHeaders(email: string, token: string) {
@@ -23,24 +13,44 @@ export class JiraService {
     private getBaseUrl(host: string) {
         // Ensure protocol and remove trailing slash
         let url = host.trim()
-        if (!url.startsWith('http')) {
-            url = `https://${url}`
-        }
+        if (!url.startsWith('http')) url = `https://${url}`
         return url.replace(/\/$/, '')
     }
 
+    private async callApi(endpoint: string, method: 'GET' | 'POST' = 'GET', body?: any) {
+        const config = this.getConfig()
+        if (!config.host || !config.email || !config.apiToken) {
+            throw new Error('Jira is not fully configured (host, email, and apiToken are required)')
+        }
+
+        const url = `${this.getBaseUrl(config.host)}${endpoint}`
+        const options: RequestInit = {
+            method,
+            headers: this.getHeaders(config.email, config.apiToken)
+        }
+
+        if (body) options.body = JSON.stringify(body)
+
+        const response = await fetch(url, options)
+        if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`Jira API Error (${response.status}): ${errorText}`)
+        }
+
+        return response.json()
+    }
+
     getConfig(): JiraConfig {
-        return store.get('jira')
+        return storageService.getGlobal('jira', { host: '', email: '', apiToken: '' })
     }
 
     saveConfig(config: JiraConfig) {
-        store.set('jira', config)
+        storageService.setGlobal('jira', config)
     }
 
     async testConnection(config: JiraConfig): Promise<boolean> {
         try {
             const url = `${this.getBaseUrl(config.host)}/rest/api/3/myself`
-            console.log('Testing connection to:', url)
             const response = await fetch(url, {
                 headers: this.getHeaders(config.email, config.apiToken)
             })
@@ -52,44 +62,11 @@ export class JiraService {
     }
 
     async getProjects(): Promise<JiraProject[]> {
-        const config = this.getConfig()
-        if (!config.host) throw new Error('Jira is not configured')
-
-        if (!config.host) throw new Error('Jira is not configured')
-
-        if (!config.host) throw new Error('Jira is not configured')
-
-        const url = `${this.getBaseUrl(config.host)}/rest/api/3/project`
-        console.log('Fetching projects from:', url)
-        const response = await fetch(url, {
-            headers: this.getHeaders(config.email, config.apiToken)
-        })
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch projects: ${response.statusText}`)
-        }
-
-        const data = await response.json()
-        return data as JiraProject[]
+        return this.callApi('/rest/api/3/project')
     }
 
     async getVersions(projectKey: string): Promise<JiraVersion[]> {
-        const config = this.getConfig()
-        if (!config.host) throw new Error('Jira is not configured')
-
-        if (!config.host) throw new Error('Jira is not configured')
-
-        const url = `${this.getBaseUrl(config.host)}/rest/api/3/project/${projectKey}/versions`
-        console.log('Fetching versions from:', url)
-        const response = await fetch(url, {
-            headers: this.getHeaders(config.email, config.apiToken)
-        })
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch versions: ${response.statusText}`)
-        }
-
-        const data = await response.json()
+        const data = await this.callApi(`/rest/api/3/project/${projectKey}/versions`)
         return (data as JiraVersion[]).sort((a, b) => {
             // Sort by date desc (if available)
             if (a.releaseDate && b.releaseDate) {
@@ -99,70 +76,22 @@ export class JiraService {
         })
     }
 
-    async searchIssues(jql: string, options: any = {}): Promise<any> {
-        const config = this.getConfig()
-        if (!config.host) throw new Error('Jira is not configured')
-
-        // Construct base URL - prioritizing standard search endpoint but parameters conform to user request
-        const baseUrl = `${this.getBaseUrl(config.host)}/rest/api/3/search/jql`
-
+    async searchIssues(jql: string, options: any = {}): Promise<{ issues: any[], total: number }> {
         let allIssues: any[] = []
         let nextPageToken: string | undefined = undefined
         let isLast = false
 
-        // Base Params
-        const baseParams = new URLSearchParams()
-        baseParams.append('jql', jql)
-
-        // Page size (maxResults per call)
-        baseParams.append('maxResults', (options.maxResults || 1000).toString())
-
-        if (options.fields) {
-            const fieldsString = Array.isArray(options.fields)
-                ? options.fields.join(',')
-                : options.fields
-            baseParams.append('fields', fieldsString)
-        }
-
-        if (options.expand) {
-            const expandString = Array.isArray(options.expand)
-                ? options.expand.join(',')
-                : options.expand
-            baseParams.append('expand', expandString)
-        }
-
         // Loop for Pagination
         do {
-            const params = new URLSearchParams(baseParams)
+            const params = new URLSearchParams()
+            params.append('jql', jql)
+            params.append('maxResults', (options.maxResults || 1000).toString())
+            if (options.fields) params.append('fields', Array.isArray(options.fields) ? options.fields.join(',') : options.fields)
+            if (options.expand) params.append('expand', Array.isArray(options.expand) ? options.expand.join(',') : options.expand)
+            if (nextPageToken) params.append('nextPageToken', nextPageToken)
 
-            if (nextPageToken) {
-                params.append('nextPageToken', nextPageToken)
-            } else {
-                // For first call, maybe startAt 0 is good practice if API requires it, 
-                // though api/3/search/jql usually defaults to 0.
-                // params.append('startAt', '0') 
-            }
-
-            const url = `${baseUrl}?${params.toString()}`
-
-            // LOGGING
-            console.log(`[JiraService] Fetching page... Token present: ${!!nextPageToken}`)
-
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: this.getHeaders(config.email, config.apiToken)
-            })
-
-            if (!response.ok) {
-                const errorText = await response.text()
-                throw new Error(`JIRA Search API error (${response.status}): ${errorText}`)
-            }
-
-            const data = await response.json()
-
-            if (data.issues) {
-                allIssues = allIssues.concat(data.issues)
-            }
+            const data = await this.callApi(`/rest/api/3/search/jql?${params.toString()}`)
+            if (data.issues) allIssues = allIssues.concat(data.issues)
 
             // Pagination Logic
             nextPageToken = data.nextPageToken
@@ -173,25 +102,11 @@ export class JiraService {
 
         } while (isLast === false)
 
-        console.log(`[JiraService] Usage: searchIssues finished. Total issues: ${allIssues.length}`)
-
-        return {
-            issues: allIssues,
-            total: allIssues.length
-        }
+        return { issues: allIssues, total: allIssues.length }
     }
 
     async getReleaseIssues(projectKey: string, versionId: string): Promise<JiraIssue[]> {
-        const config = this.getConfig()
-        if (!config.host) throw new Error('Jira is not configured')
-
-        // JQL to find issues in the version
         const jql = `project = "${projectKey}" AND fixVersion = ${versionId}`
-
-        const url = `${this.getBaseUrl(config.host)}/rest/api/3/search/jql`
-        console.log('Fetching issues (POST) from:', url)
-        console.log('JQL:', jql)
-
         let allIssues: JiraIssue[] = []
         let nextPageToken: string | undefined = undefined
 
@@ -201,31 +116,12 @@ export class JiraService {
                 maxResults: 1000,
                 fields: ['summary', 'status', 'issuetype', 'created', 'priority']
             }
+            if (nextPageToken) body.nextPageToken = nextPageToken
 
-            if (nextPageToken) {
-                body.nextPageToken = nextPageToken
-            }
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: this.getHeaders(config.email, config.apiToken),
-                body: JSON.stringify(body)
-            })
-
-            if (!response.ok) {
-                const errorBody = await response.text()
-                console.error(`Jira API Error: ${response.status} ${response.statusText}`)
-                console.error('Response Body:', errorBody)
-                throw new Error(`Failed to fetch issues: ${response.statusText} (${response.status}) - ${errorBody}`)
-            }
-
-            const data = await response.json()
+            const data = await this.callApi('/rest/api/3/search/jql', 'POST', body)
             const issues = data.issues as JiraIssue[]
             allIssues = allIssues.concat(issues)
-
             nextPageToken = data.nextPageToken
-            console.log(`Fetched ${issues.length} issues. Next Page Token: ${nextPageToken ? 'Yes' : 'No'}`)
-
         } while (nextPageToken)
 
         return allIssues

@@ -24,6 +24,8 @@ interface Api {
     issuesGetDB: (projectName: string) => Promise<any>
     issuesSaveDB: (projectName: string, db: any) => Promise<boolean>
     issuesSync: (projectName: string, jql?: string) => Promise<any>
+    issuesSearchAll: (query: string) => Promise<any[]>
+    testNotification: (provider: 'whatsapp' | 'telegram', config: any) => Promise<{ success: boolean; error?: string }>
 }
 
 declare global {

@@ -24,7 +24,9 @@ const api = {
     // Issues
     issuesGetDB: (projectName: string): Promise<any> => ipcRenderer.invoke('issues-get-db', projectName),
     issuesSaveDB: (projectName: string, db: any): Promise<any> => ipcRenderer.invoke('issues-save-db', projectName, db),
-    issuesSync: (projectName: string, jql?: string): Promise<any> => ipcRenderer.invoke('issues-sync', projectName, jql)
+    issuesSync: (projectName: string, jql?: string): Promise<any> => ipcRenderer.invoke('issues-sync', projectName, jql),
+    issuesSearchAll: (query: string): Promise<any[]> => ipcRenderer.invoke('issues-search-all', query),
+    testNotification: (provider: 'whatsapp' | 'telegram', config: any): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('test-notification', provider, config)
 }
 
 if (process.contextIsolated) {
