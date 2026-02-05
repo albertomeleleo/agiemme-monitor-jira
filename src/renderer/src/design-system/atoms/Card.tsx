@@ -17,8 +17,8 @@ export function Card({
     // Background: rgba(26, 38, 43, 0.6) -> roughly bg-brand-card/60
     // Border: 1px solid rgba(255, 255, 255, 0.1) -> border-white/10
     // Blur: 12px -> backdrop-blur-md
-    const glassStyle = "bg-brand-card/60 backdrop-blur-md border border-white/10"
-    const solidStyle = "bg-brand-deep border border-gray-800"
+    const glassStyle = "bg-brand-card/60 backdrop-blur-md border border-gray-200 dark:border-white/10"
+    const solidStyle = "bg-brand-deep border border-gray-200 dark:border-gray-800"
 
     const hoverStyle = hoverable
         ? "transition-all duration-300 hover:border-brand-cyan/50 cursor-pointer hover:bg-white/5"

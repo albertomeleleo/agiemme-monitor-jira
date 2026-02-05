@@ -27,7 +27,7 @@ export function ReleaseCard({ release, onClick, onDelete }: ReleaseCardProps): J
             )}
 
             <div className="mb-4 pr-6">
-                <h3 className="text-lg font-semibold text-white truncate group-hover:text-brand-cyan transition-colors" title={`${release.internalTitle || release.filename} - ${release.date || 'Unknown Date'}`}>
+                <h3 className="text-lg font-semibold text-brand-text-pri truncate group-hover:text-brand-cyan transition-colors" title={`${release.internalTitle || release.filename} - ${release.date || 'Unknown Date'}`}>
                     {release.internalTitle || release.filename}
                 </h3>
                 <Typography variant="mono" className="text-xs text-brand-text-sec mt-1">
@@ -40,7 +40,7 @@ export function ReleaseCard({ release, onClick, onDelete }: ReleaseCardProps): J
                 <Badge variant="evolutive" label={`${release.evolutiveCount} Feat`} />
             </div>
 
-            <div className="text-sm text-brand-text-sec line-clamp-3 leading-relaxed mb-4 p-3 rounded flex-grow font-mono text-xs border border-white/5 bg-brand-deep/50">
+            <div className="text-sm text-brand-text-sec line-clamp-3 leading-relaxed mb-4 p-3 rounded flex-grow font-mono text-xs border border-gray-200 dark:border-white/10 bg-brand-deep/50">
                 {(release.content || '').slice(0, 200)}...
             </div>
 

@@ -16,10 +16,10 @@ export function Input({ icon, fullWidth = false, className = '', ...props }: Inp
             )}
             <input
                 className={`
-                    glass-panel bg-brand-deep/50 border border-white/10 text-white rounded-lg py-2.5 
+                    glass-panel bg-brand-deep/50 border border-gray-200 dark:border-white/10 text-brand-text-pri rounded-lg py-2.5 
                     ${icon ? 'pl-10' : 'px-4'} pr-4
                     focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan/50
-                    placeholder:text-gray-600 transition-all duration-300
+                    placeholder:text-brand-text-sec/50 transition-all duration-300
                     disabled:opacity-50 disabled:cursor-not-allowed
                     ${fullWidth ? 'w-full' : ''}
                     ${className}
@@ -39,7 +39,7 @@ export function Select({ fullWidth = false, className = '', children, ...props }
         <div className={`relative ${fullWidth ? 'w-full' : ''}`}>
             <select
                 className={`
-                    appearance-none glass-panel bg-brand-deep/50 border border-white/10 text-white rounded-lg py-2 px-4 pr-8
+                    appearance-none glass-panel bg-brand-deep/50 border border-gray-200 dark:border-white/10 text-brand-text-pri rounded-lg py-2 px-4 pr-8
                     focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan/50
                     cursor-pointer hover:bg-brand-card/50 transition-colors
                     ${fullWidth ? 'w-full' : ''}

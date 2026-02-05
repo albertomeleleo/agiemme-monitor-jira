@@ -43,13 +43,13 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
             <div className="flex border-b border-white/10 mb-6 space-x-6">
                 <button
                     onClick={() => setActiveTab('overview')}
-                    className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'overview' ? 'border-brand-cyan text-brand-cyan' : 'border-transparent text-gray-500 hover:text-white'}`}
+                    className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'overview' ? 'border-brand-cyan text-brand-cyan' : 'border-transparent text-gray-500 hover:text-brand-text-pri'}`}
                 >
                     Overview & Items
                 </button>
                 <button
                     onClick={() => setActiveTab('raw')}
-                    className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'raw' ? 'border-brand-cyan text-brand-cyan' : 'border-transparent text-gray-500 hover:text-white'}`}
+                    className={`pb-3 text-sm font-bold transition-all border-b-2 ${activeTab === 'raw' ? 'border-brand-cyan text-brand-cyan' : 'border-transparent text-gray-500 hover:text-brand-text-pri'}`}
                 >
                     Raw Content
                 </button>
@@ -61,22 +61,22 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Card variant="glass" className="!p-4 bg-brand-card/30">
                             <Typography variant="caption" className="uppercase font-bold tracking-wider">Bugfixes</Typography>
-                            <div className="text-3xl font-bold text-white mt-1">{release.bugfixCount}</div>
-                            <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div className="text-3xl font-bold text-brand-text-pri mt-1">{release.bugfixCount}</div>
+                            <div className="mt-2 h-1 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                                 <div className="h-full bg-red-500" style={{ width: `${bugfixPct}%` }} />
                             </div>
                         </Card>
                         <Card variant="glass" className="!p-4 bg-brand-card/30">
                             <Typography variant="caption" className="uppercase font-bold tracking-wider">Evolutives</Typography>
-                            <div className="text-3xl font-bold text-white mt-1">{release.evolutiveCount}</div>
-                            <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div className="text-3xl font-bold text-brand-text-pri mt-1">{release.evolutiveCount}</div>
+                            <div className="mt-2 h-1 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                                 <div className="h-full bg-brand-cyan" style={{ width: `${evolutivePct}%` }} />
                             </div>
                         </Card>
-                        <Card variant="glass" className={`!p-4 ${release.isRegression ? 'bg-red-900/20 border-red-900/50' : 'bg-brand-card/30'}`}>
+                        <Card variant="glass" className={`!p-4 ${release.isRegression ? 'bg-red-500/10 dark:bg-red-900/20 border-red-200 dark:border-red-900/50' : 'bg-brand-card/30'}`}>
                             <Typography variant="caption" className="uppercase font-bold tracking-wider">Status</Typography>
-                            <div className="text-3xl font-bold text-white mt-1">
-                                {release.isRegression ? <span className="text-red-400 ]">Regression</span> : <span className="text-green-400">Stable</span>}
+                            <div className="text-3xl font-bold text-brand-text-pri mt-1">
+                                {release.isRegression ? <span className="text-red-600 dark:text-red-400">Regression</span> : <span className="text-green-600 dark:text-green-400">Stable</span>}
                             </div>
                         </Card>
                     </div>
@@ -85,7 +85,7 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Bugfixes */}
                         <div className="space-y-4">
-                            <Typography variant="h3" className="border-b border-white/10 pb-2 flex items-center gap-2">
+                            <Typography variant="h3" className="border-b border-gray-200 dark:border-white/10 pb-2 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-red-500" /> Bugfixes
                             </Typography>
                             {bugfixes.length > 0 ? (
@@ -106,7 +106,7 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
 
                         {/* Evolutives */}
                         <div className="space-y-4">
-                            <Typography variant="h3" className="border-b border-white/10 pb-2 flex items-center gap-2">
+                            <Typography variant="h3" className="border-b border-gray-200 dark:border-white/10 pb-2 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-brand-cyan" /> Evolutives
                             </Typography>
                             {evolutives.length > 0 ? (
@@ -128,7 +128,7 @@ export function ReleaseDetail({ release, onClose }: ReleaseDetailProps): JSX.Ele
                 </div>
             ) : (
                 <div className="p-0">
-                    <pre className="text-sm text-gray-400 font-mono whitespace-pre-wrap leading-relaxed bg-black/30 p-6 rounded-xl border border-gray-800">
+                    <pre className="text-sm text-brand-text-sec font-mono whitespace-pre-wrap leading-relaxed bg-brand-deep/50 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
                         {release.content}
                     </pre>
                 </div>

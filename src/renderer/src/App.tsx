@@ -13,13 +13,14 @@ import { ReleaseList } from './components/ReleaseList'
 import { ReleaseCadenceChart } from './components/charts/ReleaseCadenceChart'
 import { IssueTypeDistributionChart } from './components/charts/IssueTypeDistributionChart'
 import { ReleaseTimelineChart } from './components/charts/ReleaseTimelineChart'
-import { Typography, Card, Button, Input, Select } from '@design-system'
+import { Typography, Card, Button, Input, Select, ThemeToggle } from '@design-system'
+import { ThemeProvider } from './context/ThemeContext'
 
 type ViewMode = 'cards' | 'sla'
 type SortOption = 'date' | 'bugfixes' | 'evolutives' | 'regression'
 type SortDirection = 'asc' | 'desc'
 
-function App(): JSX.Element {
+function AppContent(): JSX.Element {
     const [projects, setProjects] = useState<Project[]>([])
     const [currentProject, setCurrentProject] = useState<Project | null>(null)
     const [releases, setReleases] = useState<ReleaseData[]>([])
@@ -145,7 +146,7 @@ function App(): JSX.Element {
     const regressionCount = releases.filter(r => r.isRegression).length
 
     return (
-        <div className="flex h-screen bg-brand-deep text-gray-100 font-sans overflow-hidden">
+        <div className="flex h-screen bg-brand-deep text-slate-900 dark:text-gray-100 font-sans overflow-hidden transition-colors duration-300">
             <nav aria-label="Main Sidebar">
                 <Sidebar
                     projects={projects}
@@ -175,7 +176,7 @@ function App(): JSX.Element {
                                         {currentProject.logo && (
                                             <img src={currentProject.logo} alt={currentProject.name} className="w-8 h-8 rounded object-cover bg-white" />
                                         )}
-                                        <h1 className="text-2xl font-bold tracking-tight text-white">
+                                        <h1 className="text-2xl font-bold tracking-tight text-brand-text-pri">
                                             {currentProject.name}
                                         </h1>
                                         <div className="flex gap-1 ml-2">
@@ -204,26 +205,29 @@ function App(): JSX.Element {
                                     </div>
                                 </div>
 
-                                {/* Stats & Upload (Visible only in Releases view) */}
-                                {projectView === 'releases' && (
-                                    <div className="flex gap-4 items-center flex-wrap">
-                                        <Button
-                                            onClick={() => setShowJiraModal(true)}
-                                            className="gap-2"
-                                            variant="primary"
-                                        >
-                                            <span role="img" aria-hidden="true">📥</span> Import from Jira
-                                        </Button>
-                                        <Card variant="glass" className="!px-4 !py-2 border border-white/10">
-                                            <Typography variant="caption" className="block text-brand-text-sec">Total</Typography>
-                                            <Typography variant="h3" className="text-white">{releases.length}</Typography>
-                                        </Card>
-                                        <Card variant="glass" className="!px-4 !py-2 border border-white/10">
-                                            <Typography variant="caption" className="block text-brand-text-sec">Regressions</Typography>
-                                            <Typography variant="h3" className="text-red-400">{regressionCount}</Typography>
-                                        </Card>
-                                    </div>
-                                )}
+                                <div className="flex items-center gap-4">
+                                    <ThemeToggle />
+                                    {/* Stats & Upload (Visible only in Releases view) */}
+                                    {projectView === 'releases' && (
+                                        <div className="flex gap-4 items-center flex-wrap">
+                                            <Button
+                                                onClick={() => setShowJiraModal(true)}
+                                                className="gap-2"
+                                                variant="primary"
+                                            >
+                                                <span role="img" aria-hidden="true">📥</span> Import from Jira
+                                            </Button>
+                                            <Card variant="glass" className="!px-4 !py-2 border border-gray-200 dark:border-white/10">
+                                                <Typography variant="caption" className="block text-brand-text-sec">Total</Typography>
+                                                <Typography variant="h3" className="text-brand-text-pri">{releases.length}</Typography>
+                                            </Card>
+                                            <Card variant="glass" className="!px-4 !py-2 border border-gray-200 dark:border-white/10">
+                                                <Typography variant="caption" className="block text-brand-text-sec">Regressions</Typography>
+                                                <Typography variant="h3" className="text-red-400">{regressionCount}</Typography>
+                                            </Card>
+                                        </div>
+                                    )}
+                                </div>
                             </header>
 
                             {/* MAIN CONTENT */}
@@ -272,7 +276,7 @@ function App(): JSX.Element {
                                                 <span role="img" aria-hidden="true">{sortDirection === 'asc' ? '⬆️' : '⬇️'}</span>
                                             </Button>
 
-                                            <div className="flex bg-brand-deep/50 p-1 rounded-lg border border-white/10 ml-2" role="group" aria-label="View Mode Toggle">
+                                            <div className="flex bg-brand-deep/50 p-1 rounded-lg border border-gray-200 dark:border-white/10 ml-2" role="group" aria-label="View Mode Toggle">
                                                 <button
                                                     onClick={() => setViewMode('cards')}
                                                     className={`p-2 rounded-md transition-colors ${viewMode === 'cards' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
@@ -294,7 +298,7 @@ function App(): JSX.Element {
                                             <Typography variant="body" className="text-gray-400">Loading releases...</Typography>
                                         </div>
                                     ) : processedReleases.length === 0 ? (
-                                        <div className="text-center py-20 border-2 border-dashed border-white/10 rounded-xl">
+                                        <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
                                             <Typography variant="h3" className="text-gray-500 mb-2">No Releases Found</Typography>
                                             <Typography variant="body" className="text-gray-400">Create a release folder or upload specific files.</Typography>
                                         </div>
@@ -329,10 +333,10 @@ function App(): JSX.Element {
                     ) : (
                         // NO PROJECT SELECTED
                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                            <div className="w-24 h-24 mb-6 rounded-2xl bg-brand-card/40 flex items-center justify-center border border-white/10 animate-float">
+                            <div className="w-24 h-24 mb-6 rounded-2xl bg-brand-card/40 flex items-center justify-center border border-gray-200 dark:border-white/10 animate-float">
                                 <span className="text-4xl" role="img" aria-label="Rocket">🚀</span>
                             </div>
-                            <Typography variant="h2" className="text-white mb-2">Welcome to Release Analyzer</Typography>
+                            <Typography variant="h2" className="text-brand-text-pri mb-2">Welcome to Release Analyzer</Typography>
                             <Typography variant="body" className="text-gray-400 max-w-md">
                                 Select a project from the sidebar or create a new one to start.
                             </Typography>
@@ -374,6 +378,14 @@ function App(): JSX.Element {
                 />
             )}
         </div>
+    )
+}
+
+function App(): JSX.Element {
+    return (
+        <ThemeProvider>
+            <AppContent />
+        </ThemeProvider>
     )
 }
 

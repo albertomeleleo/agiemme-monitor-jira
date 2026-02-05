@@ -254,7 +254,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         return (
             <div className="flex flex-col gap-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
+                    <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
                         onClick={() => fileInputRef.current?.click()}
                     >
 
@@ -266,20 +266,20 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
                             onChange={handleFileUpload}
                         />
                         <div className="text-6xl mb-6 grayscale group-hover:grayscale-0 transition-all scale-90 group-hover:scale-100 duration-300">📊</div>
-                        <Typography variant="h3" className="text-white mb-2">Upload CSV</Typography>
-                        <Typography variant="body" className="text-gray-400 max-w-xs">Drop your Jira CSV export here manually.</Typography>
+                        <Typography variant="h3" className="text-brand-text-pri mb-2">Upload CSV</Typography>
+                        <Typography variant="body" className="text-brand-text-sec max-w-xs">Drop your Jira CSV export here manually.</Typography>
                     </Card>
 
-                    <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
+                    <Card variant="glass" className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-brand-cyan/50 hover:bg-brand-card/80 transition-all cursor-pointer group h-96 relative overflow-hidden"
                         onClick={() => setShowJiraModal(true)}
                     >
 
                         <div className="text-6xl mb-6 grayscale group-hover:grayscale-0 transition-all scale-90 group-hover:scale-100 duration-300">⚡</div>
-                        <Typography variant="h3" className="text-white mb-2">Fetch from Jira</Typography>
-                        <Typography variant="body" className="text-gray-400 max-w-xs mb-4">Connect directly to Jira Cloud to analyze real-time data.</Typography>
+                        <Typography variant="h3" className="text-brand-text-pri mb-2">Fetch from Jira</Typography>
+                        <Typography variant="body" className="text-brand-text-sec max-w-xs mb-4">Connect directly to Jira Cloud to analyze real-time data.</Typography>
 
                         {lastJql && !loading && (
-                            <div className="mt-4 pt-4 border-t border-white/10 w-full animate-in fade-in slide-in-from-top-2 duration-500">
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10 w-full animate-in fade-in slide-in-from-top-2 duration-500">
                                 <Button
                                     variant="primary"
                                     size="sm"
@@ -309,7 +309,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
         )
     }
 
-    if (loading) return <div className="text-white text-center p-12">Analyzing SLAs...</div>
+    if (loading) return <div className="text-brand-text-pri text-center p-12">Analyzing SLAs...</div>
 
     // Extract available months and priorities
     const availableMonths = uniqueMonths(report?.issues || [])
@@ -511,7 +511,7 @@ export function SLADashboard({ currentProject }: SLADashboardProps): JSX.Element
             {/* Floating Tooltip */}
             {hoveredIssue && (
                 <div
-                    className="fixed z-50 bg-gray-900 border border-gray-600 shadow-xl rounded-lg p-3 text-xs text-white pointer-events-none"
+                    className="fixed z-50 bg-gray-900 dark:bg-gray-800 border border-gray-700 shadow-xl rounded-lg p-3 text-xs text-white pointer-events-none"
                     style={{ top: tooltipPos.y + 16, left: tooltipPos.x + 16 }}
                 >
                     <div className="font-bold mb-2 text-gray-300 border-b border-gray-700 pb-1">

@@ -149,8 +149,8 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
         >
             <div className="space-y-6">
                 {error && (
-                    <Card variant="solid" className="bg-red-900/50 border-red-500/50 !p-3">
-                        <Typography variant="caption" className="text-red-200">{error}</Typography>
+                    <Card variant="solid" className="bg-red-500/10 dark:bg-red-900/50 border-red-500/20 dark:border-red-500/50 !p-3">
+                        <Typography variant="caption" className="text-red-600 dark:text-red-200">{error}</Typography>
                     </Card>
                 )}
 
@@ -190,7 +190,7 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                                 <button
                                     type="button"
                                     onClick={() => setShowToken(!showToken)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-text-sec hover:text-brand-text-pri"
                                 >
                                     {showToken ? 'Hide' : 'Show'}
                                 </button>
@@ -255,20 +255,20 @@ export function JiraImportModal({ currentProject, onClose, onSuccess }: JiraImpo
                 {step === 3 && (
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <Card variant="glass" className="bg-brand-deep/50 text-center !p-4">
-                                <div className="text-2xl font-bold text-red-500 ">{issues.filter(i => i.fields.issuetype.name === 'Bug').length}</div>
-                                <Typography variant="caption" className="uppercase">Bugs Found</Typography>
+                            <Card variant="glass" className="bg-brand-deep/50 text-center !p-4 border border-gray-200 dark:border-white/10">
+                                <div className="text-2xl font-bold text-red-600 dark:text-red-500 ">{issues.filter(i => i.fields.issuetype.name === 'Bug').length}</div>
+                                <Typography variant="caption" className="uppercase font-bold">Bugs Found</Typography>
                             </Card>
-                            <Card variant="glass" className="bg-brand-deep/50 text-center !p-4">
+                            <Card variant="glass" className="bg-brand-deep/50 text-center !p-4 border border-gray-200 dark:border-white/10">
                                 <div className="text-2xl font-bold text-brand-cyan">{issues.filter(i => i.fields.issuetype.name !== 'Bug').length}</div>
-                                <Typography variant="caption" className="uppercase">Stories/Tasks</Typography>
+                                <Typography variant="caption" className="uppercase font-bold">Stories/Tasks</Typography>
                             </Card>
                         </div>
 
                         <div className="max-h-48 overflow-y-auto bg-brand-deep/80 p-2 rounded border border-white/10">
                             {issues.slice(0, 10).map(i => (
                                 <div key={i.key} className="truncate text-xs text-brand-text-sec font-mono mb-1">
-                                    <span className="font-bold text-white">[{i.key}]</span> {i.fields.summary}
+                                    <span className="font-bold text-brand-text-pri">[{i.key}]</span> {i.fields.summary}
                                 </div>
                             ))}
                             {issues.length > 10 && <div className="text-xs text-brand-text-sec text-center mt-2 italic">... and {issues.length - 10} more.</div>}

@@ -24,12 +24,12 @@ export function Typography({
     );
 
     const styles = {
-        h1: "text-3xl md:text-4xl font-bold tracking-tight text-white",
-        h2: "text-2xl font-bold tracking-tight text-white",
-        h3: "text-xl font-semibold text-white",
+        h1: "text-3xl md:text-4xl font-bold tracking-tight text-brand-text-pri",
+        h2: "text-2xl font-bold tracking-tight text-brand-text-pri",
+        h3: "text-xl font-semibold text-brand-text-pri",
         h4: "text-lg font-semibold text-brand-cyan",
         body: "text-base text-brand-text-sec leading-relaxed",
-        caption: "text-sm text-gray-400",
+        caption: "text-sm text-brand-text-sec",
         mono: "font-mono text-xs"
     };
 

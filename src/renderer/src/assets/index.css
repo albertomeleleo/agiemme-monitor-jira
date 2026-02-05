@@ -2,19 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brand-deep: 241 245 249;
+  /* Slate 100 */
+  --brand-card: 255 255 255;
+  --brand-cyan: 8 145 178;
+  --brand-blue: 37 99 235;
+  --brand-purple: 147 51 234;
+  --brand-text-sec: 71 85 105;
+  /* Slate 600 */
+  --brand-text-pri: 15 23 42;
+  /* Slate 900 */
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-shadow: rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  --brand-deep: 13 19 22;
+  --brand-card: 26 38 43;
+  --brand-cyan: 0 242 255;
+  --brand-blue: 41 121 255;
+  --brand-purple: 217 70 239;
+  --brand-text-sec: 176 190 197;
+  --brand-text-pri: 255 255 255;
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: rgba(0, 0, 0, 0.3);
+}
+
 @layer base {
   body {
-    @apply bg-brand-deep text-white;
+    @apply bg-brand-deep text-slate-900 dark:text-white transition-colors duration-300;
   }
 }
 
 @layer components {
   .glass-panel {
-    @apply bg-brand-card/60 backdrop-blur-md border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)];
+    @apply bg-brand-card/60 backdrop-blur-md border shadow-[0_4px_30px_var(--glass-shadow)];
+    border-color: var(--glass-border);
   }
-  
+
   .glass-button {
-    @apply bg-brand-card/30 hover:bg-brand-card/50 border border-white/20 text-brand-cyan transition-all duration-300;
+    @apply bg-brand-card/30 hover:bg-brand-card/50 border text-brand-cyan transition-all duration-300;
+    border-color: var(--glass-border);
   }
 
   /* Scrollbar Styling */
@@ -22,12 +51,15 @@
     width: 8px;
     height: 8px;
   }
+
   ::-webkit-scrollbar-track {
     @apply bg-brand-deep;
   }
+
   ::-webkit-scrollbar-thumb {
     @apply bg-brand-card rounded-full border border-brand-deep;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-brand-text-sec;
   }

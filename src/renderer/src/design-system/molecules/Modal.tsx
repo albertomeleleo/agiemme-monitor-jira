@@ -51,14 +51,14 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = '2x
                 aria-labelledby="modal-title"
                 className={`
                     relative w-full ${maxWidthClasses[maxWidth]} max-h-[90vh] flex flex-col
-                    glass-panel rounded-2xl shadow-2xl border border-white/10 overflow-hidden
+                    glass-panel rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden
                     animate-in zoom-in-95 duration-200
                 `}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-white/10 bg-brand-deep/50">
-                    <div id="modal-title" className="text-xl font-bold text-white">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-white/10 bg-brand-deep/50">
+                    <div id="modal-title" className="text-xl font-bold text-brand-text-pri">
                         {title}
                     </div>
                     <Button variant="ghost" size="sm" onClick={onClose} className="!p-2" aria-label="Close modal">
@@ -73,7 +73,7 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = '2x
 
                 {/* Footer */}
                 {footer && (
-                    <div className="p-6 border-t border-white/10 bg-brand-deep/50">
+                    <div className="p-6 border-t border-gray-200 dark:border-white/10 bg-brand-deep/50">
                         {footer}
                     </div>
                 )}

@@ -37,7 +37,7 @@ export function SLALegend({ validIssues, config }: SLALegendProps): JSX.Element 
     const renderCell = (value: number, target: number) => {
         const isMet = value >= target
         return (
-            <span className={`font-bold ${isMet ? 'text-green-400' : 'text-red-400'}`}>
+            <span className={`font-bold ${isMet ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {value.toFixed(1)}%
             </span>
         )
@@ -47,11 +47,11 @@ export function SLALegend({ validIssues, config }: SLALegendProps): JSX.Element 
         return (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Reaction Aggregations */}
-                <Card variant="glass" className="!p-6 border border-white/10">
-                    <Typography variant="mono" className="text-white font-bold mb-4 text-sm uppercase">Reaction SLA Groups</Typography>
+                <Card variant="glass" className="!p-6 border border-gray-200 dark:border-white/10">
+                    <Typography variant="mono" className="text-brand-text-pri font-bold mb-4 text-sm uppercase">Reaction SLA Groups</Typography>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs text-brand-text-sec">
-                            <thead className="text-brand-text-sec border-b border-white/10">
+                            <thead className="text-brand-text-sec border-b border-gray-200 dark:border-white/10">
                                 <tr>
                                     <th className="pb-2">Group</th>
                                     <th className="pb-2">Tiers Included</th>
@@ -66,7 +66,7 @@ export function SLALegend({ validIssues, config }: SLALegendProps): JSX.Element 
                                     const target = 100 - g.tolerance
                                     return (
                                         <tr key={idx}>
-                                            <td className="py-2 font-bold text-white">{g.name}</td>
+                                            <td className="py-2 font-bold text-brand-text-pri">{g.name}</td>
                                             <td className="py-2 text-gray-400 italic">{g.tiers.join(', ') || '-'}</td>
                                             <td className="py-2 text-right font-mono text-gray-300">{target}%</td>
                                             <td className="py-2 text-right font-mono">{renderCell(stats.reaction, target)}</td>
@@ -82,11 +82,11 @@ export function SLALegend({ validIssues, config }: SLALegendProps): JSX.Element 
                 </Card>
 
                 {/* Resolution Aggregations */}
-                <Card variant="glass" className="!p-6 border border-white/10">
-                    <Typography variant="mono" className="text-white font-bold mb-4 text-sm uppercase">Resolution SLA Groups</Typography>
+                <Card variant="glass" className="!p-6 border border-gray-200 dark:border-white/10">
+                    <Typography variant="mono" className="text-brand-text-pri font-bold mb-4 text-sm uppercase">Resolution SLA Groups</Typography>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs text-brand-text-sec">
-                            <thead className="text-brand-text-sec border-b border-white/10">
+                            <thead className="text-brand-text-sec border-b border-gray-200 dark:border-white/10">
                                 <tr>
                                     <th className="pb-2">Group</th>
                                     <th className="pb-2">Tiers Included</th>
@@ -101,7 +101,7 @@ export function SLALegend({ validIssues, config }: SLALegendProps): JSX.Element 
                                     const target = 100 - g.tolerance
                                     return (
                                         <tr key={idx}>
-                                            <td className="py-2 font-bold text-white">{g.name}</td>
+                                            <td className="py-2 font-bold text-brand-text-pri">{g.name}</td>
                                             <td className="py-2 text-gray-400 italic">{g.tiers.join(', ') || '-'}</td>
                                             <td className="py-2 text-right font-mono text-gray-300">{target}%</td>
                                             <td className="py-2 text-right font-mono">{renderCell(stats.resolution, target)}</td>
@@ -121,11 +121,11 @@ export function SLALegend({ validIssues, config }: SLALegendProps): JSX.Element 
 
     // --- LEGACY / TIER BASED VIEW ---
     return (
-        <Card variant="glass" className="!p-6 border border-white/10">
-            <Typography variant="mono" className="text-white font-bold mb-4 text-sm uppercase">SLA Legend</Typography>
+        <Card variant="glass" className="!p-6 border border-gray-200 dark:border-white/10">
+            <Typography variant="mono" className="text-brand-text-pri font-bold mb-4 text-sm uppercase">SLA Legend</Typography>
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs text-brand-text-sec">
-                    <thead className="text-brand-text-sec border-b border-white/10">
+                    <thead className="text-brand-text-sec border-b border-gray-200 dark:border-white/10">
                         <tr>
                             <th className="pb-2">Tier</th>
                             <th className="pb-2">Priority (Config)</th>
@@ -162,11 +162,11 @@ export function SLALegend({ validIssues, config }: SLALegendProps): JSX.Element 
 
                             // Row Color Logic
                             const tierColorClass =
-                                tier === 'Expedite' ? 'text-purple-300' :
-                                    tier === 'Critical' ? 'text-red-300' :
-                                        tier === 'Major' ? 'text-orange-300' :
-                                            tier === 'Minor' ? 'text-blue-300' :
-                                                'text-gray-300'
+                                tier === 'Expedite' ? 'text-purple-600 dark:text-purple-300' :
+                                    tier === 'Critical' ? 'text-red-600 dark:text-red-300' :
+                                        tier === 'Major' ? 'text-orange-600 dark:text-orange-300' :
+                                            tier === 'Minor' ? 'text-blue-600 dark:text-blue-300' :
+                                                'text-slate-600 dark:text-gray-300'
 
                             const tierIssues = validIssues.filter(i => i.slaTier === tier)
                             const stats = getComplianceStats(tierIssues)

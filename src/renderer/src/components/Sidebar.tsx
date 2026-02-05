@@ -26,7 +26,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
     }
 
     return (
-        <div className="w-64 glass-panel border-r border-white/5 flex flex-col h-screen p-4">
+        <div className="w-64 glass-panel border-r border-gray-200 dark:border-white/5 flex flex-col h-screen p-4">
             <div className="mb-6 flex items-center justify-center p-4">
                 <img src={logo} alt="GNV Logo" className="h-12 w-auto object-contain" />
             </div>
@@ -41,7 +41,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                             aria-current={currentProject?.name === project.name ? 'page' : undefined}
                             className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${currentProject?.name === project.name
                                 ? 'bg-brand-cyan/10 text-brand-cyan border-l-2 border-brand-cyan'
-                                : 'text-brand-text-sec hover:text-white hover:bg-brand-card/50'
+                                : 'text-brand-text-sec hover:text-brand-text-pri hover:bg-brand-card/50'
                                 }`}
                         >
                             {/* Project Logo/Icon */}
@@ -57,13 +57,13 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
 
                         {/* Nested Sub-Menu */}
                         {currentProject?.name === project.name && (
-                            <div className="ml-4 mt-1 pl-4 border-l border-white/10 space-y-1 animate-in slide-in-from-left-2 duration-200">
+                            <div className="ml-4 mt-1 pl-4 border-l border-gray-200 dark:border-white/10 space-y-1 animate-in slide-in-from-left-2 duration-200">
                                 <button
                                     onClick={() => onSelectView?.('releases')}
                                     aria-current={currentView === 'releases' ? 'location' : undefined}
                                     className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'releases'
-                                        ? 'text-brand-cyan bg-brand-cyan/5'
-                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        ? 'text-brand-cyan bg-brand-cyan/10'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-brand-text-pri hover:bg-gray-100 dark:hover:bg-white/5'
                                         }`}
                                 >
                                     <span>📦</span> Releases
@@ -72,8 +72,8 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                                     onClick={() => onSelectView?.('sla')}
                                     aria-current={currentView === 'sla' ? 'location' : undefined}
                                     className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${currentView === 'sla'
-                                        ? 'text-brand-cyan bg-brand-cyan/5'
-                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        ? 'text-brand-cyan bg-brand-cyan/10'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-brand-text-pri hover:bg-gray-100 dark:hover:bg-white/5'
                                         }`}
                                 >
                                     <span>⏱️</span> SLA Dashboard
@@ -85,7 +85,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                 ))}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-800">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
                 {isCreating ? (
                     <div className="space-y-2">
                         <input
@@ -106,7 +106,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                     <button
                         onClick={() => setIsCreating(true)}
                         aria-label="Add new project"
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-brand-text-sec border border-dashed border-white/10 rounded-lg hover:text-white hover:border-brand-cyan hover:bg-brand-cyan/5 transition-all"
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-brand-text-sec border border-dashed border-gray-300 dark:border-white/10 rounded-lg hover:text-brand-text-pri hover:border-brand-cyan hover:bg-brand-cyan/5 transition-all"
                     >
                         <span role="img" aria-hidden="true">+</span> New Project
                     </button>
@@ -115,7 +115,7 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
 
 
             {/* Help Button (Moved from global nav to bottom) */}
-            <div className="mt-4 pt-4 border-t border-gray-800">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
                 {/* Note: In the new design, help might be separate, but I'll leave it implicitly accessible or add a button if user requested. 
                     The App.tsx has a HelpPage but no way to navigate to it now that I removed "Help" button from Sidebar? 
                     Actually, App.tsx rendered HelpPage only when currentSection === 'help'.
@@ -128,6 +128,6 @@ export function Sidebar({ projects, currentProject, onSelectProject, onCreatePro
                 </div>
             </div>
 
-        </div>
+        </div >
     )
 }
