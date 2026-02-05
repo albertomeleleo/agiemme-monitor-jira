@@ -10,6 +10,7 @@ export interface ProjectConfig {
     sla: {
         reactionTime: number | Record<string, number>; // Minutes (number for legacy, Record for granular)
         resolution: Record<string, number>; // Tier -> Hours
+        excludeLunchBreak?: boolean;
     };
     tiers?: string[]; // Ordered list of enabled tiers (e.g. ['P1', 'P2']). If missing, use defaults.
     priorities: Record<string, string>; // Jira Priority -> SLA Tier

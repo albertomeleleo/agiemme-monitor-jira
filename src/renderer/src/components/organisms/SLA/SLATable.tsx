@@ -157,7 +157,7 @@ export function SLATable({ issues, onSelectIssue, onHoverIssue }: SLATableProps)
                                                                 {Object.entries(issue.timeBreakdown).map(([key, val]) => (
                                                                     <div key={key} className="bg-brand-deep/50 px-3 py-1.5 rounded-lg border border-white/10 text-[11px] flex items-center gap-2">
                                                                         <span className="text-gray-400">{key}</span>
-                                                                        <span className="text-brand-cyan font-mono font-bold">{formatDuration(val)}</span>
+                                                                        <span className="text-brand-cyan font-mono font-bold">{formatDuration(val)} ({val})</span>
                                                                     </div>
                                                                 ))}
                                                             </div>

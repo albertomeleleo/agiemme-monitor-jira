@@ -149,7 +149,26 @@ export function ProjectSettingsModal({ project, isOpen, onClose, onSave }: Proje
 
                     {/* SLA Section */}
                     <div className="space-y-4">
-                        <Typography variant="h4" className="text-brand-cyan">SLA Targets (HH:MM)</Typography>
+                        <div className="flex justify-between items-center">
+                            <Typography variant="h4" className="text-brand-cyan">SLA Targets (HH:MM)</Typography>
+                            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-white transition-colors bg-brand-deep/30 px-3 py-1.5 rounded-lg border border-white/5">
+                                <input
+                                    type="checkbox"
+                                    checked={config.sla.excludeLunchBreak || false}
+                                    onChange={(e) => {
+                                        setConfig({
+                                            ...config,
+                                            sla: {
+                                                ...config.sla,
+                                                excludeLunchBreak: e.target.checked
+                                            }
+                                        })
+                                    }}
+                                    className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-brand-cyan focus:ring-brand-cyan focus:ring-offset-gray-800 accent-brand-cyan"
+                                />
+                                <span className="text-xs font-bold uppercase tracking-wider">Exclude Lunch Break (13-14)</span>
+                            </label>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {(config.tiers || ['Expedite', 'Critical', 'Major', 'Minor', 'Trivial']).map(tier => (
                                 <div key={tier} className="bg-brand-deep/30 p-3 rounded border border-white/5 space-y-3">

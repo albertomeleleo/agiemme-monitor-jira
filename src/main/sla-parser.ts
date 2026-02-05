@@ -312,8 +312,35 @@ export function parseJiraApiIssues(issuesData: any[], config?: ProjectConfig): S
         const is24x7 = isExpedite && isPostFeb2026
 
         const calcDuration = (start: number, end: number): number => {
-            if (is24x7) return Math.max(0, (end - start) / (1000 * 60))
-            return calculateBusinessMinutes(new Date(start), new Date(end))
+            const excludeLunch = (slaConfig as any).excludeLunchBreak || false
+
+            if (is24x7) {
+                let duration = Math.max(0, (end - start) / (1000 * 60))
+                if (excludeLunch) {
+                    // Subtract lunch for each day in range
+                    let cur = new Date(start)
+                    while (cur.getTime() < end) {
+                        const lunchStart = new Date(cur)
+                        lunchStart.setHours(13, 0, 0, 0)
+                        const lunchEnd = new Date(cur)
+                        lunchEnd.setHours(14, 0, 0, 0)
+
+                        const overlapStart = Math.max(start, lunchStart.getTime())
+                        const overlapEnd = Math.min(end, lunchEnd.getTime())
+
+                        if (overlapEnd > overlapStart) {
+                            duration -= (overlapEnd - overlapStart) / (1000 * 60)
+                        }
+
+                        // Move to next day
+                        cur.setDate(cur.getDate() + 1)
+                        cur.setHours(0, 0, 0, 0)
+                    }
+                }
+                return duration
+            }
+
+            return calculateBusinessMinutes(new Date(start), new Date(end), excludeLunch)
         }
 
         // --- UNIVERSAL BREAKDOWN & CALCULATION ---
@@ -484,7 +511,7 @@ function isHoliday(date: Date): boolean {
     return false
 }
 
-function calculateBusinessMinutes(start: Date, end: Date): number {
+function calculateBusinessMinutes(start: Date, end: Date, excludeLunch: boolean = false): number {
     if (start >= end) return 0
 
     let totalMinutes = 0
@@ -508,7 +535,23 @@ function calculateBusinessMinutes(start: Date, end: Date): number {
             const intervalEnd = end < businessEnd ? end : businessEnd
 
             if (intervalEnd > intervalStart) {
-                totalMinutes += (intervalEnd.getTime() - intervalStart.getTime()) / (1000 * 60)
+                let segmentMinutes = (intervalEnd.getTime() - intervalStart.getTime()) / (1000 * 60)
+
+                if (excludeLunch) {
+                    const lunchStart = new Date(current)
+                    lunchStart.setHours(13, 0, 0, 0)
+                    const lunchEnd = new Date(current)
+                    lunchEnd.setHours(14, 0, 0, 0)
+
+                    const overlapStart = intervalStart > lunchStart ? intervalStart : lunchStart
+                    const overlapEnd = intervalEnd < lunchEnd ? intervalEnd : lunchEnd
+
+                    if (overlapEnd > overlapStart) {
+                        segmentMinutes -= (overlapEnd.getTime() - overlapStart.getTime()) / (1000 * 60)
+                    }
+                }
+
+                totalMinutes += segmentMinutes
             }
         }
 
